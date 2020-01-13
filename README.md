@@ -3,7 +3,7 @@ This library is designed to work with the TLC5947 LED controller chip from Texas
 It can also be configured to work with many other LED driver chips from the TLC59** family
 using the #define values in the header file. Tested to work with the Arduino MEGA and Teensy 3.2, but should work
 with any Arduino/Genuino microcontroller or similar. It supports all features of the TLC5947 datasheet such as:
-- Per-LED color control and dimming (16-bit)
+- Per-LED color control and dimming (12-bit)
 - Per-LED white-balance
 - Support for many, many LEDs by daisy-chaining TLC5947 chips in hardware (configurable by the tlc_count static variable)
 - Per color-channel current controller
