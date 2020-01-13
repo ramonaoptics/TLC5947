@@ -66,6 +66,7 @@ void setChannel(uint16_t channel_number, uint16_t value);
 
 /* Get LED Intensities */
 uint16_t getChannelValue(uint16_t channelNum, int color_channel_index);
+uint16_t getLEDValuePerChip(uint16_t chip, int led_number);
 
 /* Control Mode Parameters */
 void setBrightnessCurrent(uint8_t global);
@@ -90,27 +91,19 @@ uint32_t getGsclkFreq();
 /* Diagnostic Methods */
 void printByte(byte myByte);
 
-// uint8_t _leds_per_chip = LEDS_PER_CHIP;
-// uint8_t _color_channel_count = COLOR_CHANNEL_COUNT;
-// uint8_t _tlc_count = TLC_COUNT;
-//
-// uint8_t _dc_data[TLC_COUNT][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT];
-// uint8_t _rgb_order[TLC_COUNT][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT];
-// uint16_t _grayscale_data[TLC_COUNT][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT];
-
-static const uint8_t _tlc_count; // This
+static const int _tlc_count; // This
 static const uint8_t COLOR_CHANNEL_COUNT = 3;
-static const uint8_t LEDS_PER_CHIP = 16;
+static const uint8_t LEDS_PER_CHIP = 8;
 static bool enforce_max_current;
 static float max_current_amps;
 
-static uint8_t _dc_data[][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT];
 static uint8_t _rgb_order[][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT];
 static uint16_t _grayscale_data[][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT];
 
 uint8_t rgb_order_default[3] = {0, 1, 2};
 
 private:
+  int enforceMaxCurrent();
   int debug = 0;
   uint8_t _lat;
   uint8_t _spi_mosi;

@@ -155,14 +155,13 @@ void TLC5947::setAllLedRgb(uint16_t red, uint16_t green, uint16_t blue)
 }
 
 
-
-void TLC5947::updateLeds()
-{
+// Returns 1 if the current is too high.
+int TLC5947::enforceMaxCurrent(){
   if (enforce_max_current)
   {
     // Get number of counts for current pattern
     uint32_t power_output_counts = 0;
-    for (int16_t chip = (int8_t)_tlc_count - 1; chip >= 0; chip--)
+    for (int chip = _tlc_count - 1; chip >= 0; chip--)
       for (int8_t led_channel_index = (int8_t)LEDS_PER_CHIP - 1; led_channel_index >= 0; led_channel_index--)
         for (int8_t color_channel_index = (int8_t)COLOR_CHANNEL_COUNT - 1; color_channel_index >= 0; color_channel_index--)
           power_output_counts += _grayscale_data[chip][led_channel_index][color_channel_index];
@@ -174,29 +173,70 @@ void TLC5947::updateLeds()
       Serial.print(power_output_amps);
       Serial.print(F(") exceeds maximum current output ("));
       Serial.print(max_current_amps);
-	  Serial.println(')');
-      return;
+      Serial.println(')');
+      return 1;
     }
+  }
+  return 0;
+}
+void TLC5947::updateLeds(){
+  uint8_t buffer[3];
+  uint16_t pwm[2];
+  int current_too_high = enforceMaxCurrent();
+  if (current_too_high != 0){
+    return;
   }
   if (debug >= 2)
   {
     Serial.println(F("Begin LED Update String (All Chips)..."));
   }
 
+  // ASSUMING that _grayscale_data is declared as [][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT]
+  // uint16_t *grayscale_data_2D[LEDS_PER_CHIP* COLOR_CHANNEL_COUNT];
+  // grayscale_data_2D = &(_grayscale_data[0][0][0]);
+
   // uint32_t power_output_counts = 0;
-  for (int16_t chip = (int8_t)_tlc_count - 1; chip >= 0; chip--)
+  // pwmbuffer = (uint16_t *)malloc(sizeof(uint16_t) * NUM_LEDS_PER_DRIVER * n_tlc5947);
+  // memset(pwmbuffer, 0, sizeof(uint16_t) *  NUM_LEDS_PER_DRIVER * n_tlc5947);
+
+  for (int chip = _tlc_count - 1; chip >= 0; chip--)
   {
     SPI.beginTransaction(mSettings);
-    uint8_t color_channel_ordered;
-    for (int8_t led_channel_index = (int8_t)LEDS_PER_CHIP - 1; led_channel_index >= 0; led_channel_index--)
+    for (int8_t led_channel_index = (int8_t)(LEDS_PER_CHIP * COLOR_CHANNEL_COUNT - 2);
+            led_channel_index >= 0;
+            led_channel_index=led_channel_index-2)
     {
-      for (int8_t color_channel_index = (int8_t)COLOR_CHANNEL_COUNT - 1; color_channel_index >= 0; color_channel_index--)
-      {
-        color_channel_ordered = _rgb_order[chip][led_channel_index][(uint8_t) color_channel_index];
+      // color_channel_ordered = _rgb_order[chip][led_channel_index][(uint8_t) color_channel_index];
+      // color_channel_ordered = _rgb_order[chip][led_channel_index][(uint8_t) color_channel_index];
+      pwm[0] = getLEDValuePerChip(chip, led_channel_index);
+      pwm[1] = getLEDValuePerChip(chip, led_channel_index + 1);
 
-        SPI.transfer((char)(_grayscale_data[chip][led_channel_index][color_channel_ordered] >> 8)); // Output MSB first
-        SPI.transfer((char)(_grayscale_data[chip][led_channel_index][color_channel_ordered] & 0xFF)); // Followed by LSB
-      }
+      // pwm[0] is a number between
+      // 0x0000 and 0xFFFF
+      // in the illuminate library
+      // Consider the number 0xABCD
+      // We don't have enough precision to change the LED brightness based on the
+      // 4 LSB bits.
+      // Therefore, we only consider
+      // 0xABCX
+      // the 2 MSB nibbles, are 0xAB
+      // The 1 LSB nibble is 0xC
+
+
+
+      // In jaehee's test code,
+      // pwm[0] is a number between
+      // 0x0000 and 0x0FFF
+      // the equivalent number to 0xABCD above is described as
+      // 0x0ABC
+
+      // 12 bits per channel, send MSB first
+      buffer[0] =                             (pwm[1] & 0xFF00) >> 8;
+      buffer[1] = ((pwm[0] & 0xF000) >> 8) + ((pwm[1] & 0x00F0) << 4);
+      buffer[2] =  (pwm[0] & 0x0FF0) >> 4;
+      SPI.transfer(buffer[0]);
+      SPI.transfer(buffer[1]);
+      SPI.transfer(buffer[2]);
     }
     SPI.endTransaction();
   }
@@ -258,10 +298,6 @@ void TLC5947::setLed(uint16_t led_number, uint16_t rgb)
   _grayscale_data[chip][channel][0] = rgb;
 }
 
-
-
-
-
 void TLC5947::latch()
 {
   delayMicroseconds(LATCH_DELAY);
@@ -279,6 +315,12 @@ uint16_t TLC5947::getChannelValue(uint16_t channel_number, int color_channel_ind
 
   uint8_t chip = (uint16_t)floor(channel_number / LEDS_PER_CHIP);
   uint8_t channel = (uint8_t)(channel_number - LEDS_PER_CHIP * chip);
+  return _grayscale_data[chip][channel][color_channel_index];
+}
+
+uint16_t TLC5947::getLEDValuePerChip(uint16_t chip, int led_number){
+  int color_channel_index = led_number % COLOR_CHANNEL_COUNT;
+  int channel = led_number / COLOR_CHANNEL_COUNT;
   return _grayscale_data[chip][channel][color_channel_index];
 }
 
