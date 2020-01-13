@@ -53,7 +53,7 @@ class TLC5947
 public:
 
 /* Initialization */
-void init(uint8_t lat, uint8_t spi_mosi, uint8_t spi_clk, uint8_t blank);
+void init(int8_t num_latches, int8_t num_tlc_one_row, uint8_t spi_mosi, uint8_t spi_clk, uint8_t blank);
 void deallocate();
 
 /* Setting individual LED intensities */
@@ -80,7 +80,7 @@ void setRgbPinOrderSingle(uint16_t channel, uint8_t rPos, uint8_t grPos, uint8_t
 void setBuffer(uint8_t bit);
 
 void updateLeds();
-void latch();
+void latch(int latch_index);
 void setSpiBaudRate(uint32_t new_baud_rate);
 uint32_t getSpiBaudRate();
 
@@ -91,7 +91,9 @@ uint32_t getGsclkFreq();
 /* Diagnostic Methods */
 void printByte(byte myByte);
 
-static const int _tlc_count; // This
+static const int _tlc_count; //
+static const int latch_index;
+static const int num_tlc_one_row;
 static const uint8_t COLOR_CHANNEL_COUNT = 3;
 static const uint8_t LEDS_PER_CHIP = 8;
 static bool enforce_max_current;
@@ -99,13 +101,14 @@ static float max_current_amps;
 
 static uint8_t _rgb_order[][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT];
 static uint16_t _grayscale_data[][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT];
-
+static uint8_t _latches[];
 uint8_t rgb_order_default[3] = {0, 1, 2};
 
 private:
   int enforceMaxCurrent();
   int debug = 0;
-  uint8_t _lat;
+  int _num_latches;
+  int _num_tlc_one_row;
   uint8_t _spi_mosi;
   uint8_t _spi_clk;
   uint8_t _blank;

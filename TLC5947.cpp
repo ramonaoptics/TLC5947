@@ -29,10 +29,10 @@
 
 #include "TLC5947.h"
 
-void TLC5947::init(uint8_t lat, uint8_t spi_mosi, uint8_t spi_clk, uint8_t blank)
+void TLC5947::init(int8_t num_latches, int8_t num_tlc_one_row, uint8_t spi_mosi, uint8_t spi_clk, uint8_t blank)
 {
-
-  _lat = lat;
+  _num_tlc_one_row = num_tlc_one_row;
+  _num_latches = num_latches;
   _spi_clk = spi_clk;
   _spi_mosi = spi_mosi;
   _blank = blank;
@@ -42,8 +42,12 @@ void TLC5947::init(uint8_t lat, uint8_t spi_mosi, uint8_t spi_clk, uint8_t blank
   SPI.begin();
 
   // Set up latch
-  pinMode(_lat, OUTPUT);
-  digitalWrite(_lat, LOW);
+  for(uint8_t i=0; i<num_latches; i++){
+    auto lat = _latches[i];
+    pinMode(lat, OUTPUT);
+    digitalWrite(lat, LOW);
+  }
+
 
   // set up blank
   pinMode(_blank, OUTPUT);
@@ -198,46 +202,50 @@ void TLC5947::updateLeds(){
   // uint32_t power_output_counts = 0;
   // pwmbuffer = (uint16_t *)malloc(sizeof(uint16_t) * NUM_LEDS_PER_DRIVER * n_tlc5947);
   // memset(pwmbuffer, 0, sizeof(uint16_t) *  NUM_LEDS_PER_DRIVER * n_tlc5947);
-
-  for (int chip = _tlc_count - 1; chip >= 0; chip--)
+  for (int latch_index = 0; latch_index < 9; latch_index++)
   {
-    SPI.beginTransaction(mSettings);
-    for (int8_t led_channel_index = (int8_t)(LEDS_PER_CHIP * COLOR_CHANNEL_COUNT - 2);
-            led_channel_index >= 0;
-            led_channel_index=led_channel_index-2)
+    for (int chip = _num_tlc_one_row * (latch_index + 1) - 1; chip >= 0; chip--)
     {
-      // color_channel_ordered = _rgb_order[chip][led_channel_index][(uint8_t) color_channel_index];
-      // color_channel_ordered = _rgb_order[chip][led_channel_index][(uint8_t) color_channel_index];
-      pwm[0] = getLEDValuePerChip(chip, led_channel_index);
-      pwm[1] = getLEDValuePerChip(chip, led_channel_index + 1);
+      SPI.beginTransaction(mSettings);
+      for (int8_t led_channel_index = (int8_t)(LEDS_PER_CHIP * COLOR_CHANNEL_COUNT - 2);
+              led_channel_index >= 0;
+              led_channel_index=led_channel_index-2)
+      {
+        // color_channel_ordered = _rgb_order[chip][led_channel_index][(uint8_t) color_channel_index];
+        // color_channel_ordered = _rgb_order[chip][led_channel_index][(uint8_t) color_channel_index];
+        pwm[0] = getLEDValuePerChip(chip, led_channel_index);
+        pwm[1] = getLEDValuePerChip(chip, led_channel_index + 1);
 
-      // pwm[0] is a number between
-      // 0x0000 and 0xFFFF
-      // in the illuminate library
-      // Consider the number 0xABCD
-      // We don't have enough precision to change the LED brightness based on the
-      // 4 LSB bits.
-      // Therefore, we only consider
-      // 0xABCX
-      // the 2 MSB nibbles, are 0xAB
-      // The 1 LSB nibble is 0xC
+        // pwm[0] is a number between
+        // 0x0000 and 0xFFFF
+        // in the illuminate library
+        // Consider the number 0xABCD
+        // We don't have enough precision to change the LED brightness based on the
+        // 4 LSB bits.
+        // Therefore, we only consider
+        // 0xABCX
+        // the 2 MSB nibbles, are 0xAB
+        // The 1 LSB nibble is 0xC
 
-      // 12 bits per channel, send MSB first
-      buffer[0] =                             (pwm[1] & 0xFF00) >> 8;
-      buffer[1] = ((pwm[0] & 0xF000) >> 8) + ((pwm[1] & 0x00F0) << 4);
-      buffer[2] =  (pwm[0] & 0x0FF0) >> 4;
-      SPI.transfer(buffer[0]);
-      SPI.transfer(buffer[1]);
-      SPI.transfer(buffer[2]);
+        // 12 bits per channel, send MSB first
+        buffer[0] =                             (pwm[1] & 0xFF00) >> 8;
+        buffer[1] = ((pwm[0] & 0xF000) >> 8) + ((pwm[1] & 0x00F0) << 4);
+        buffer[2] =  (pwm[0] & 0x0FF0) >> 4;
+        SPI.transfer(buffer[0]);
+        SPI.transfer(buffer[1]);
+        SPI.transfer(buffer[2]);
+      }
+      SPI.endTransaction();
     }
-    SPI.endTransaction();
-  }
 
-  if (debug >= 2)
-  {
-    Serial.println(F("End LED Update String (All Chips)"));
-  }
-  latch();
+
+    if (debug >= 2)
+    {
+      Serial.println(F("End LED Update String (All Chips)"));
+    }
+    latch(latch_index);
+  } //end of latch loop
+
 }
 
 void TLC5947::setChannel(uint16_t channel_number, uint16_t value)
@@ -253,7 +261,7 @@ void TLC5947::setChannel(uint16_t channel_number, uint16_t value)
 
 void TLC5947::setLed(uint16_t led_number, uint16_t red, uint16_t green, uint16_t blue)
 {
-  uint8_t chip = (uint16_t)floor(led_number / LEDS_PER_CHIP);
+  uint8_t chip = (uint8_t)floor(led_number / LEDS_PER_CHIP);
   uint8_t channel = (uint8_t)(led_number - LEDS_PER_CHIP * chip);        // Turn that LED on
   _grayscale_data[chip][channel][2] = blue;
   _grayscale_data[chip][channel][1] = green;
@@ -290,12 +298,13 @@ void TLC5947::setLed(uint16_t led_number, uint16_t rgb)
   _grayscale_data[chip][channel][0] = rgb;
 }
 
-void TLC5947::latch()
+void TLC5947::latch(int latch_index)
 {
+  auto lat = _latches[latch_index];
   delayMicroseconds(LATCH_DELAY);
-  digitalWrite(_lat, HIGH);
+  digitalWrite(lat, HIGH);
   delayMicroseconds(LATCH_DELAY);
-  digitalWrite(_lat, LOW);
+  digitalWrite(lat, LOW);
   delayMicroseconds(LATCH_DELAY);
 }
 
