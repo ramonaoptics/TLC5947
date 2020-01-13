@@ -203,20 +203,22 @@ void TLC5947::updateLeds(){
   // uint32_t power_output_counts = 0;
   // pwmbuffer = (uint16_t *)malloc(sizeof(uint16_t) * NUM_LEDS_PER_DRIVER * n_tlc5947);
   // memset(pwmbuffer, 0, sizeof(uint16_t) *  NUM_LEDS_PER_DRIVER * n_tlc5947);
-  for (int latch_index = 0; latch_index < 9; latch_index++)
+  for (int latch_index = _num_latches-1; latch_index>=0; latch_index--)
   {
-    for (int chip = _num_tlc_one_row * (latch_index + 1) - 1; chip >= 0; chip--)
+    SPI.beginTransaction(mSettings);
+    for (int chip = _num_latches * _num_tlc_one_row - (_num_latches - latch_index);
+              chip >= 0;
+              chip-=_num_latches)
     {
-      SPI.beginTransaction(mSettings);
+      Serial.println(chip);
       for (int8_t led_channel_index = (int8_t)(LEDS_PER_CHIP * COLOR_CHANNEL_COUNT - 2);
               led_channel_index >= 0;
-              led_channel_index=led_channel_index-2)
+              led_channel_index-=2)
       {
         // color_channel_ordered = _rgb_order[chip][led_channel_index][(uint8_t) color_channel_index];
         // color_channel_ordered = _rgb_order[chip][led_channel_index][(uint8_t) color_channel_index];
         pwm[0] = getLEDValuePerChip(chip, led_channel_index);
         pwm[1] = getLEDValuePerChip(chip, led_channel_index + 1);
-
         // pwm[0] is a number between
         // 0x0000 and 0xFFFF
         // in the illuminate library
@@ -236,17 +238,16 @@ void TLC5947::updateLeds(){
         SPI.transfer(buffer[1]);
         SPI.transfer(buffer[2]);
       }
-      SPI.endTransaction();
     }
-
-
-    if (debug >= 2)
-    {
-      Serial.println(F("End LED Update String (All Chips)"));
-    }
+    SPI.endTransaction();
     latch(latch_index);
+
   } //end of latch loop
   digitalWrite(_blank, LOW);
+  if (debug >= 2)
+  {
+    Serial.println(F("End LED Update String (All Chips)"));
+  }
 }
 
 void TLC5947::setChannel(uint16_t channel_number, uint16_t value)
