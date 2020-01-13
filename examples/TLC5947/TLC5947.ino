@@ -1,8 +1,8 @@
 /*
-   TLC5955 Control Library
-   Used to control the TI TLC5955 LED driver chip
+   TLC5947 Control Library
+   Used to control the TI TLC5947 LED driver chip
    Zack Phillips - zkphil@berkeley.edu
-   Product Page: http://www.ti.com/product/tlc5955
+   Product Page: http://www.ti.com/product/tlc5947
    Copyright (c) 2018, Zachary F. Phillips
    All rights reserved.
    Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "TLC5955.h"
+#include "TLC5947.h"
 #include "SPI.h"
 
 // Pin set-up
@@ -36,17 +36,17 @@
 #define SPI_MOSI 11
 #define SPI_CLK 13
 
-const uint8_t TLC5955::_tlc_count = 1;          // Change to reflect number of TLC chips
-float TLC5955::max_current_amps = 10;      // Maximum current output, amps
-bool TLC5955::enforce_max_current = false;   // Whether to enforce max current limit
+const uint8_t TLC5947::_tlc_count = 1;          // Change to reflect number of TLC chips
+float TLC5947::max_current_amps = 10;      // Maximum current output, amps
+bool TLC5947::enforce_max_current = false;   // Whether to enforce max current limit
 
 // Define dot correction, pin rgb order, and grayscale data arrays in program memory
-uint8_t TLC5955::_dc_data[TLC5955::_tlc_count][TLC5955::LEDS_PER_CHIP][TLC5955::COLOR_CHANNEL_COUNT];
-uint8_t TLC5955::_rgb_order[TLC5955::_tlc_count][TLC5955::LEDS_PER_CHIP][TLC5955::COLOR_CHANNEL_COUNT];
-uint16_t TLC5955::_grayscale_data[TLC5955::_tlc_count][TLC5955::LEDS_PER_CHIP][TLC5955::COLOR_CHANNEL_COUNT];
+uint8_t TLC5947::_dc_data[TLC5947::_tlc_count][TLC5947::LEDS_PER_CHIP][TLC5947::COLOR_CHANNEL_COUNT];
+uint8_t TLC5947::_rgb_order[TLC5947::_tlc_count][TLC5947::LEDS_PER_CHIP][TLC5947::COLOR_CHANNEL_COUNT];
+uint16_t TLC5947::_grayscale_data[TLC5947::_tlc_count][TLC5947::LEDS_PER_CHIP][TLC5947::COLOR_CHANNEL_COUNT];
 
-// Create TLC5955 object
-TLC5955 tlc;
+// Create TLC5947 object
+TLC5947 tlc;
 
 void setup() {
   // Set pins (non-serial) to output mode
@@ -64,10 +64,10 @@ void setup() {
   // We must set dot correction values, so set them all to the brightest adjustment
   tlc.setAllDcData(127);
 
-  // Set Max Current Values (see TLC5955 datasheet)
+  // Set Max Current Values (see TLC5947 datasheet)
   tlc.setMaxCurrent(3, 3, 3); // Go up to 7
 
-  // Set Function Control Data Latch values. See the TLC5955 Datasheet for the purpose of this latch.
+  // Set Function Control Data Latch values. See the TLC5947 Datasheet for the purpose of this latch.
   // Order: DSPRPT, TMGRST, RFRESH, ESPWM, LSDVLT
   tlc.setFunctionData(true, true, true, true, true);
 

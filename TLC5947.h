@@ -1,8 +1,8 @@
 /*
-   TLC5955 Control Library
-   Used to control the TI TLC5955 LED driver chip
+   TLC5947 Control Library
+   Used to control the TI TLC5947 LED driver chip
    Zack Phillips - zkphil@berkeley.edu
-   Product Page: http://www.ti.com/product/tlc5955
+   Product Page: http://www.ti.com/product/tlc5947
 
    Copyright (c) 2015, Zachary F. Phillips
    All rights reserved.
@@ -30,8 +30,8 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef TLC5955_H
-#define TLC5955_H
+#ifndef TLC5947_H
+#define TLC5947_H
 
 #include <SPI.h>
 #include <Arduino.h>
@@ -58,7 +58,7 @@ static const float LED_CURRENT_AMPS = 0.020;
 // Line ending for serial output
 static const char LINE_ENDING[] = "\n";
 
-class TLC5955
+class TLC5947
 {
 public:
 

@@ -1,8 +1,8 @@
 /*
-   TLC5955 Control Library
-   Used to control the TI TLC5955 LED driver chip
+   TLC5947 Control Library
+   Used to control the TI TLC5947 LED driver chip
    Zack Phillips - zkphil@berkeley.edu
-   Product Page: http://www.ti.com/product/tlc5955
+   Product Page: http://www.ti.com/product/tlc5947
    Copyright (c) 2018, Zachary F. Phillips
    All rights reserved.
    Redistribution and use in source and binary forms, with or without
@@ -27,9 +27,9 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "TLC5955.h"
+#include "TLC5947.h"
 
-void TLC5955::init(uint8_t gslat, uint8_t spi_mosi, uint8_t spi_clk, uint8_t gsclk)
+void TLC5947::init(uint8_t gslat, uint8_t spi_mosi, uint8_t spi_clk, uint8_t gsclk)
 {
 
   _gslat = gslat;
@@ -56,7 +56,7 @@ void TLC5955::init(uint8_t gslat, uint8_t spi_mosi, uint8_t spi_clk, uint8_t gsc
   setRgbPinOrder(rgb_order_default[0], rgb_order_default[1], rgb_order_default[2]);
 }
 
-void TLC5955::setSpiBaudRate(uint32_t new_baud_rate)
+void TLC5947::setSpiBaudRate(uint32_t new_baud_rate)
 {
   // Store old baud rate
   spi_baud_rate = new_baud_rate;
@@ -65,13 +65,13 @@ void TLC5955::setSpiBaudRate(uint32_t new_baud_rate)
   SPISettings mSettings(spi_baud_rate, MSBFIRST, SPI_MODE0);
 }
 
-uint32_t TLC5955::getSpiBaudRate()
+uint32_t TLC5947::getSpiBaudRate()
 {
   // Return current baud rate
   return spi_baud_rate;
 }
 
-void TLC5955::setGsclkFreq(uint32_t new_gsclk_frequency)
+void TLC5947::setGsclkFreq(uint32_t new_gsclk_frequency)
 {
   // Store previous gsclk frequency
   gsclk_frequency = new_gsclk_frequency;
@@ -81,12 +81,12 @@ void TLC5955::setGsclkFreq(uint32_t new_gsclk_frequency)
   analogWrite(_gsclk, 1);
 }
 
-uint32_t TLC5955::getGsclkFreq()
+uint32_t TLC5947::getGsclkFreq()
 {
   return gsclk_frequency;
 }
 
-void TLC5955::setRgbPinOrder(uint8_t rPos, uint8_t grPos, uint8_t bPos)
+void TLC5947::setRgbPinOrder(uint8_t rPos, uint8_t grPos, uint8_t bPos)
 {
   if (COLOR_CHANNEL_COUNT == 3)
   {
@@ -100,17 +100,17 @@ void TLC5955::setRgbPinOrder(uint8_t rPos, uint8_t grPos, uint8_t bPos)
       }
     }
   } else
-    Serial.println(F("ERROR (TLC5955::setRgbPinOrder): Color channel count is not 3"));
+    Serial.println(F("ERROR (TLC5947::setRgbPinOrder): Color channel count is not 3"));
 }
 
-void TLC5955::setPinOrderSingle(uint16_t led_number, uint8_t color_channel_index, uint8_t position)
+void TLC5947::setPinOrderSingle(uint16_t led_number, uint8_t color_channel_index, uint8_t position)
 {
   uint8_t chip = (uint16_t)floor(led_number / LEDS_PER_CHIP);
   uint8_t channel = (uint8_t)(led_number - LEDS_PER_CHIP * chip);        // Turn that LED on
   _rgb_order[chip][channel][color_channel_index] = position;
 }
 
-void TLC5955::setRgbPinOrderSingle(uint16_t led_number, uint8_t rPos, uint8_t grPos, uint8_t bPos)
+void TLC5947::setRgbPinOrderSingle(uint16_t led_number, uint8_t rPos, uint8_t grPos, uint8_t bPos)
 {
   uint8_t chip = (uint16_t)floor(led_number / LEDS_PER_CHIP);
   uint8_t channel = (uint8_t)round(led_number - LEDS_PER_CHIP * chip);        // Turn that LED on
@@ -119,7 +119,7 @@ void TLC5955::setRgbPinOrderSingle(uint16_t led_number, uint8_t rPos, uint8_t gr
   _rgb_order[chip][channel][2] = bPos;
 }
 
-void TLC5955::printByte(byte my_byte)
+void TLC5947::printByte(byte my_byte)
 {
   for (byte mask = 0x80; mask; mask >>= 1)
   {
@@ -130,7 +130,7 @@ void TLC5955::printByte(byte my_byte)
   }
 }
 
-void TLC5955::setAllLed(uint16_t gsvalue)
+void TLC5947::setAllLed(uint16_t gsvalue)
 {
   for (int8_t chip = _tlc_count - 1; chip >= 0; chip--)
   {
@@ -142,7 +142,7 @@ void TLC5955::setAllLed(uint16_t gsvalue)
   }
 }
 
-void TLC5955::setAllLedRgb(uint16_t red, uint16_t green, uint16_t blue)
+void TLC5947::setAllLedRgb(uint16_t red, uint16_t green, uint16_t blue)
 {
   if (COLOR_CHANNEL_COUNT == 3)
   {
@@ -156,10 +156,10 @@ void TLC5955::setAllLedRgb(uint16_t red, uint16_t green, uint16_t blue)
       }
     }
   } else
-    Serial.println(F("ERROR (TLC5955::setAllLedRgb): Color channel count is not 3"));
+    Serial.println(F("ERROR (TLC5947::setAllLedRgb): Color channel count is not 3"));
 }
 
-void TLC5955::flushBuffer()
+void TLC5947::flushBuffer()
 {
   setControlModeBit(CONTROL_MODE_OFF);
   SPI.beginTransaction(mSettings);
@@ -168,7 +168,7 @@ void TLC5955::flushBuffer()
   SPI.endTransaction();
 }
 
-void TLC5955::setControlModeBit(bool is_control_mode)
+void TLC5947::setControlModeBit(bool is_control_mode)
 {
   // Make sure latch is low
   digitalWrite(_gslat, LOW);
@@ -210,7 +210,7 @@ void TLC5955::setControlModeBit(bool is_control_mode)
   SPI.begin();
 }
 
-void TLC5955::updateLeds()
+void TLC5947::updateLeds()
 {
   if (enforce_max_current)
   {
@@ -263,7 +263,7 @@ void TLC5955::updateLeds()
   latch();
 }
 
-void TLC5955::setChannel(uint16_t channel_number, uint16_t value)
+void TLC5947::setChannel(uint16_t channel_number, uint16_t value)
 {
   // Change to multi-channel indexing
   int16_t chip_number = floor(channel_number / (COLOR_CHANNEL_COUNT * LEDS_PER_CHIP));
@@ -274,7 +274,7 @@ void TLC5955::setChannel(uint16_t channel_number, uint16_t value)
   _grayscale_data[chip_number][channel_number_new][color_channel_number] = value;
 }
 
-void TLC5955::setLed(uint16_t led_number, uint16_t red, uint16_t green, uint16_t blue)
+void TLC5947::setLed(uint16_t led_number, uint16_t red, uint16_t green, uint16_t blue)
 {
   uint8_t chip = (uint16_t)floor(led_number / LEDS_PER_CHIP);
   uint8_t channel = (uint8_t)(led_number - LEDS_PER_CHIP * chip);        // Turn that LED on
@@ -283,7 +283,7 @@ void TLC5955::setLed(uint16_t led_number, uint16_t red, uint16_t green, uint16_t
   _grayscale_data[chip][channel][0] = red;
 }
 
-void TLC5955::setLedAppend(uint16_t led_number, uint16_t red, uint16_t green, uint16_t blue)
+void TLC5947::setLedAppend(uint16_t led_number, uint16_t red, uint16_t green, uint16_t blue)
 {
   uint8_t chip = (uint16_t)floor(led_number / LEDS_PER_CHIP);
   uint8_t channel = (uint8_t)(led_number - LEDS_PER_CHIP * chip);        // Turn that LED on
@@ -304,7 +304,7 @@ void TLC5955::setLedAppend(uint16_t led_number, uint16_t red, uint16_t green, ui
     _grayscale_data[chip][channel][0] = red  + _grayscale_data[chip][channel][0];
 }
 
-void TLC5955::setLed(uint16_t led_number, uint16_t rgb)
+void TLC5947::setLed(uint16_t led_number, uint16_t rgb)
 {
   uint8_t chip = (uint16_t)floor(led_number / LEDS_PER_CHIP);
   uint8_t channel = (uint8_t)(led_number - LEDS_PER_CHIP * chip);        // Turn that LED on
@@ -315,7 +315,7 @@ void TLC5955::setLed(uint16_t led_number, uint16_t rgb)
 
 
 
-void TLC5955::setMaxCurrent(uint8_t MCR, uint8_t MCG, uint8_t MCB)
+void TLC5947::setMaxCurrent(uint8_t MCR, uint8_t MCG, uint8_t MCB)
 {
   // Ensure max Current agrees with datasheet (3-bit)
   if (MCR > 7)
@@ -333,7 +333,7 @@ void TLC5955::setMaxCurrent(uint8_t MCR, uint8_t MCG, uint8_t MCB)
   _MCB = MCB;
 }
 
-void TLC5955::setMaxCurrent(uint8_t MCRGB)
+void TLC5947::setMaxCurrent(uint8_t MCRGB)
 {
   // Ensure max Current agrees with datasheet (3-bit)
   if (MCRGB > 7)
@@ -344,7 +344,7 @@ void TLC5955::setMaxCurrent(uint8_t MCRGB)
 }
 
 // Defines functional bits in settings - see datasheet for what
-void TLC5955::setFunctionData(bool DSPRPT, bool TMGRST, bool RFRESH, bool ESPWM, bool LSDVLT)
+void TLC5947::setFunctionData(bool DSPRPT, bool TMGRST, bool RFRESH, bool ESPWM, bool LSDVLT)
 {
   uint8_t data = 0;
   data |= DSPRPT << 0;
@@ -356,7 +356,7 @@ void TLC5955::setFunctionData(bool DSPRPT, bool TMGRST, bool RFRESH, bool ESPWM,
 }
 
 // Set Brightness through CURRENT from 10-100% of value set in function mode
-void TLC5955::setBrightnessCurrent(uint8_t rgb)
+void TLC5947::setBrightnessCurrent(uint8_t rgb)
 {
   _bright_red = rgb;
   _bright_green = rgb;
@@ -364,7 +364,7 @@ void TLC5955::setBrightnessCurrent(uint8_t rgb)
 }
 
 // Set Brightness through CURRENT from 10-100% of value set in function mode
-void TLC5955::setBrightnessCurrent(uint8_t red, uint8_t green, uint8_t blue)
+void TLC5947::setBrightnessCurrent(uint8_t red, uint8_t green, uint8_t blue)
 {
   _bright_red = red;
   _bright_green = green;
@@ -372,7 +372,7 @@ void TLC5955::setBrightnessCurrent(uint8_t red, uint8_t green, uint8_t blue)
 }
 
 // Sets all dot correction data to the same value (default should be 255
-void TLC5955::setAllDcData(uint8_t dcvalue)
+void TLC5947::setAllDcData(uint8_t dcvalue)
 {
   for (int8_t chip = _tlc_count - 1; chip >= 0; chip--)
   {
@@ -384,7 +384,7 @@ void TLC5955::setAllDcData(uint8_t dcvalue)
   }
 }
 
-void TLC5955::setLedDc(uint16_t led_number, uint8_t color_channel_number, uint8_t dc_value)
+void TLC5947::setLedDc(uint16_t led_number, uint8_t color_channel_number, uint8_t dc_value)
 {
   if (color_channel_number < COLOR_CHANNEL_COUNT)
   {
@@ -392,11 +392,11 @@ void TLC5955::setLedDc(uint16_t led_number, uint8_t color_channel_number, uint8_
     uint8_t channel = (uint8_t)(led_number - LEDS_PER_CHIP * chip);
     _dc_data[chip][channel][color_channel_number] = dc_value;
   } else
-    Serial.println(F("ERROR (TLC5955::setLedDc) : Invalid color channel number"));
+    Serial.println(F("ERROR (TLC5947::setLedDc) : Invalid color channel number"));
 }
 
 // Update the Control Register (changes settings)
-void TLC5955::updateControl()
+void TLC5947::updateControl()
 {
   for (int8_t repeatCtr = 0; repeatCtr < CONTROL_WRITE_COUNT; repeatCtr++)
   {
@@ -447,7 +447,7 @@ void TLC5955::updateControl()
   }
 }
 
-void TLC5955::latch()
+void TLC5947::latch()
 {
   delayMicroseconds(LATCH_DELAY);
   digitalWrite(_gslat, HIGH);
@@ -457,7 +457,7 @@ void TLC5955::latch()
 }
 
 // Get a single channel's current values
-uint16_t TLC5955::getChannelValue(uint16_t channel_number, int color_channel_index)
+uint16_t TLC5947::getChannelValue(uint16_t channel_number, int color_channel_index)
 {
   if (color_channel_index >= COLOR_CHANNEL_COUNT)
     return 0;
@@ -469,7 +469,7 @@ uint16_t TLC5955::getChannelValue(uint16_t channel_number, int color_channel_ind
 
 // SPI interface - accumulates single bits, then sends over SPI
 // interface once we accumulate 8 bits
-void TLC5955::setBuffer(uint8_t bit)
+void TLC5947::setBuffer(uint8_t bit)
 {
   bitWrite(_buffer, _buffer_count, bit);
   _buffer_count--;
