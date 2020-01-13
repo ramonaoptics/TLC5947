@@ -231,8 +231,8 @@ void TLC5947::updateLeds(){
         // The 1 LSB nibble is 0xC
 
         // 12 bits per channel, send MSB first
-        buffer[0] =                             (pwm[1] & 0xFF00) >> 8;
-        buffer[1] = ((pwm[0] & 0xF000) >> 8) + ((pwm[1] & 0x00F0) << 4);
+        buffer[0] =                              (pwm[1] & 0xFF00) >> 8;
+        buffer[1] = ((pwm[0] & 0xF000) >> 12) + ((pwm[1] & 0x00F0) << 0);
         buffer[2] =  (pwm[0] & 0x0FF0) >> 4;
         SPI.transfer(buffer[0]);
         SPI.transfer(buffer[1]);
