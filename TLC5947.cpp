@@ -190,6 +190,7 @@ void TLC5947::updateLeds(){
   if (current_too_high != 0){
     return;
   }
+  digitalWrite(_blank, HIGH);
   if (debug >= 2)
   {
     Serial.println(F("Begin LED Update String (All Chips)..."));
@@ -245,7 +246,7 @@ void TLC5947::updateLeds(){
     }
     latch(latch_index);
   } //end of latch loop
-
+  digitalWrite(_blank, LOW);
 }
 
 void TLC5947::setChannel(uint16_t channel_number, uint16_t value)
