@@ -37,17 +37,7 @@
 #include <Arduino.h>
 
 /* Bit Quantities (Change to match other TLC driver chips) */
-#define GS_BITS 16
-#define GB_BITS 7
-#define MC_BITS 3
-#define FC_BITS 5
-#define DC_BITS 7
-#define CONTROL_ZERO_BITS 389   /* Bits required for correct control reg size */
-#define TOTAL_REGISTER_SIZE 76
 #define LATCH_DELAY 1
-#define CONTROL_WRITE_COUNT 2
-#define CONTROL_MODE_ON 1
-#define CONTROL_MODE_OFF 0
 
 // Serial baud rate
 #define SPI_BAUD_RATE 1500000
@@ -89,7 +79,6 @@ void setRgbPinOrderSingle(uint16_t channel, uint8_t rPos, uint8_t grPos, uint8_t
 /* Sending data to device (Updating, flushing, latching) */
 void setBuffer(uint8_t bit);
 
-void flushBuffer();
 void updateLeds();
 void latch();
 void setSpiBaudRate(uint32_t new_baud_rate);

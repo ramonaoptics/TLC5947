@@ -154,13 +154,6 @@ void TLC5947::setAllLedRgb(uint16_t red, uint16_t green, uint16_t blue)
     Serial.println(F("ERROR (TLC5947::setAllLedRgb): Color channel count is not 3"));
 }
 
-void TLC5947::flushBuffer()
-{
-  SPI.beginTransaction(mSettings);
-  for (int16_t fCount = 0; fCount < _tlc_count * TOTAL_REGISTER_SIZE / 8; fCount++)
-    SPI.transfer(0);
-  SPI.endTransaction();
-}
 
 
 void TLC5947::updateLeds()
