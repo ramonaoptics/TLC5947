@@ -259,34 +259,6 @@ void TLC5947::setLed(uint16_t led_number, uint16_t rgb)
 }
 
 
-// Defines functional bits in settings - see datasheet for what
-void TLC5947::setFunctionData(bool DSPRPT, bool TMGRST, bool RFRESH, bool ESPWM, bool LSDVLT)
-{
-  uint8_t data = 0;
-  data |= DSPRPT << 0;
-  data |= TMGRST << 1;
-  data |= RFRESH << 2;
-  data |= ESPWM << 3;
-  data |= LSDVLT << 4;
-  _function_data = data;
-}
-
-// Set Brightness through CURRENT from 10-100% of value set in function mode
-void TLC5947::setBrightnessCurrent(uint8_t rgb)
-{
-  _bright_red = rgb;
-  _bright_green = rgb;
-  _bright_blue = rgb;
-}
-
-// Set Brightness through CURRENT from 10-100% of value set in function mode
-void TLC5947::setBrightnessCurrent(uint8_t red, uint8_t green, uint8_t blue)
-{
-  _bright_red = red;
-  _bright_green = green;
-  _bright_blue = blue;
-}
-
 
 
 

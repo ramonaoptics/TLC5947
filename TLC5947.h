@@ -71,7 +71,6 @@ uint16_t getChannelValue(uint16_t channelNum, int color_channel_index);
 void setBrightnessCurrent(uint8_t global);
 void setBrightnessCurrent(uint8_t red, uint8_t green, uint8_t blue);
 
-void setFunctionData(bool DSPRPT, bool TMGRST, bool RFRESH, bool ESPWM, bool LSDVLT);
 void setRgbPinOrder(uint8_t rPos, uint8_t grPos, uint8_t bPos);
 void setPinOrderSingle(uint16_t channel, uint8_t color_channel_index, uint8_t position);
 void setRgbPinOrderSingle(uint16_t channel, uint8_t rPos, uint8_t grPos, uint8_t bPos);
@@ -117,14 +116,6 @@ private:
   uint8_t _spi_mosi;
   uint8_t _spi_clk;
   uint8_t _blank;
-
-  uint8_t _function_data;
-  uint16_t _bright_red;
-  uint16_t _bright_green;
-  uint16_t _bright_blue;
-  uint8_t _MCR;
-  uint8_t _MCG;
-  uint8_t _MCB;
 
   /* SPI */
   uint8_t _buffer;
