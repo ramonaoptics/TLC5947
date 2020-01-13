@@ -63,7 +63,7 @@ class TLC5947
 public:
 
 /* Initialization */
-void init(uint8_t gslat, uint8_t spi_mosi, uint8_t spi_clk, uint8_t gsclk);
+void init(uint8_t lat, uint8_t spi_mosi, uint8_t spi_clk, uint8_t blank);
 void deallocate();
 
 /* Setting individual LED intensities */
@@ -99,6 +99,7 @@ void updateControl();
 void setSpiBaudRate(uint32_t new_baud_rate);
 uint32_t getSpiBaudRate();
 
+// illuminate might be calling these grayscale freq even though not used.
 void setGsclkFreq(uint32_t new_gsclk_frequency);
 uint32_t getGsclkFreq();
 
@@ -127,10 +128,10 @@ uint8_t rgb_order_default[3] = {0, 1, 2};
 
 private:
   int debug = 0;
-  uint8_t _gslat;
+  uint8_t _lat;
   uint8_t _spi_mosi;
   uint8_t _spi_clk;
-  uint8_t _gsclk;
+  uint8_t _blank;
 
   uint8_t _function_data;
   uint16_t _bright_red;
@@ -145,7 +146,6 @@ private:
   int8_t _buffer_count = 7;
   SPISettings mSettings;
   uint32_t spi_baud_rate = 1000000;
-  uint32_t gsclk_frequency = 2500000;
 };
 
 #endif

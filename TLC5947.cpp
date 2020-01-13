@@ -29,25 +29,25 @@
 
 #include "TLC5947.h"
 
-void TLC5947::init(uint8_t gslat, uint8_t spi_mosi, uint8_t spi_clk, uint8_t gsclk)
+void TLC5947::init(uint8_t lat, uint8_t spi_mosi, uint8_t spi_clk, uint8_t blank)
 {
 
-  _gslat = gslat;
+  _lat = lat;
   _spi_clk = spi_clk;
   _spi_mosi = spi_mosi;
-  _gsclk = gsclk;
+  _blank = blank;
 
   // Initialize SPI library
   SPI.setMOSI(_spi_mosi);
   SPI.begin();
 
   // Set up latch
-  pinMode(_gslat, OUTPUT);
-  digitalWrite(_gslat, LOW);
+  pinMode(_lat, OUTPUT);
+  digitalWrite(_lat, LOW);
 
-  // set up gsclk
-  pinMode(_gsclk, OUTPUT);
-  setGsclkFreq(gsclk_frequency);
+  // set up blank
+  pinMode(_blank, OUTPUT);
+  digitalWrite(_blank, HIGH);
 
   // Define baud rate
   SPISettings mSettings(spi_baud_rate, MSBFIRST, SPI_MODE0);
@@ -73,17 +73,12 @@ uint32_t TLC5947::getSpiBaudRate()
 
 void TLC5947::setGsclkFreq(uint32_t new_gsclk_frequency)
 {
-  // Store previous gsclk frequency
-  gsclk_frequency = new_gsclk_frequency;
-
-  analogWriteFrequency(_gsclk, gsclk_frequency);
-  analogWriteResolution(1);
-  analogWrite(_gsclk, 1);
+  //not used. only kept for compatibility with TLC5955
 }
 
 uint32_t TLC5947::getGsclkFreq()
 {
-  return gsclk_frequency;
+  return 0;
 }
 
 void TLC5947::setRgbPinOrder(uint8_t rPos, uint8_t grPos, uint8_t bPos)
@@ -171,7 +166,7 @@ void TLC5947::flushBuffer()
 void TLC5947::setControlModeBit(bool is_control_mode)
 {
   // Make sure latch is low
-  digitalWrite(_gslat, LOW);
+  digitalWrite(_lat, LOW);
 
   // Turn off SPI Temporarily
   SPI.end();
@@ -450,9 +445,9 @@ void TLC5947::updateControl()
 void TLC5947::latch()
 {
   delayMicroseconds(LATCH_DELAY);
-  digitalWrite(_gslat, HIGH);
+  digitalWrite(_lat, HIGH);
   delayMicroseconds(LATCH_DELAY);
-  digitalWrite(_gslat, LOW);
+  digitalWrite(_lat, LOW);
   delayMicroseconds(LATCH_DELAY);
 }
 
