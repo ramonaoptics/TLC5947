@@ -80,10 +80,7 @@ uint16_t getChannelValue(uint16_t channelNum, int color_channel_index);
 /* Control Mode Parameters */
 void setBrightnessCurrent(uint8_t global);
 void setBrightnessCurrent(uint8_t red, uint8_t green, uint8_t blue);
-void setAllDcData(uint8_t dcvalue);
-void setLedDc(uint16_t led_number, uint8_t color_channel_index, uint8_t dc_value);
-void setMaxCurrent(uint8_t MCR, uint8_t MCG, uint8_t MCB);
-void setMaxCurrent(uint8_t MCRGB);
+
 void setFunctionData(bool DSPRPT, bool TMGRST, bool RFRESH, bool ESPWM, bool LSDVLT);
 void setRgbPinOrder(uint8_t rPos, uint8_t grPos, uint8_t bPos);
 void setPinOrderSingle(uint16_t channel, uint8_t color_channel_index, uint8_t position);
@@ -91,11 +88,10 @@ void setRgbPinOrderSingle(uint16_t channel, uint8_t rPos, uint8_t grPos, uint8_t
 
 /* Sending data to device (Updating, flushing, latching) */
 void setBuffer(uint8_t bit);
-void setControlModeBit(bool isControlMode);
+
 void flushBuffer();
 void updateLeds();
 void latch();
-void updateControl();
 void setSpiBaudRate(uint32_t new_baud_rate);
 uint32_t getSpiBaudRate();
 

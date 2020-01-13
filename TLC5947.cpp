@@ -156,54 +156,12 @@ void TLC5947::setAllLedRgb(uint16_t red, uint16_t green, uint16_t blue)
 
 void TLC5947::flushBuffer()
 {
-  setControlModeBit(CONTROL_MODE_OFF);
   SPI.beginTransaction(mSettings);
   for (int16_t fCount = 0; fCount < _tlc_count * TOTAL_REGISTER_SIZE / 8; fCount++)
     SPI.transfer(0);
   SPI.endTransaction();
 }
 
-void TLC5947::setControlModeBit(bool is_control_mode)
-{
-  // Make sure latch is low
-  digitalWrite(_lat, LOW);
-
-  // Turn off SPI Temporarily
-  SPI.end();
-
-  // Enable digital IO
-  pinMode(_spi_mosi, OUTPUT);
-  pinMode(_spi_clk, OUTPUT);
-
-  // Manually write control sequence
-  if (is_control_mode)
-  {
-    // Manually Write control sequence
-    digitalWrite(_spi_mosi, HIGH);          // Set MSB to HIGH
-    digitalWrite(_spi_clk, LOW);                  // Clock
-    // Pulse
-    digitalWrite(_spi_clk, HIGH);
-    digitalWrite(_spi_clk, LOW);
-    shiftOut(_spi_mosi, _spi_clk, MSBFIRST, B10010110);                 // see
-    // datasheet
-    // HLLHLHHL
-    if (debug >= 2)
-    {
-      Serial.print('1');
-      printByte(B10010110);
-    }
-  } else
-  {
-    if (debug >= 2)
-      Serial.print('0');
-
-    digitalWrite(_spi_mosi, LOW); // Set MSB to LOW
-    digitalWrite(_spi_clk, LOW); // Clock Pulse
-    digitalWrite(_spi_clk, HIGH);
-    digitalWrite(_spi_clk, LOW);
-  }
-  SPI.begin();
-}
 
 void TLC5947::updateLeds()
 {
@@ -235,7 +193,6 @@ void TLC5947::updateLeds()
   // uint32_t power_output_counts = 0;
   for (int16_t chip = (int8_t)_tlc_count - 1; chip >= 0; chip--)
   {
-    setControlModeBit(CONTROL_MODE_OFF);
     SPI.beginTransaction(mSettings);
     uint8_t color_channel_ordered;
     for (int8_t led_channel_index = (int8_t)LEDS_PER_CHIP - 1; led_channel_index >= 0; led_channel_index--)
@@ -309,35 +266,6 @@ void TLC5947::setLed(uint16_t led_number, uint16_t rgb)
 }
 
 
-
-void TLC5947::setMaxCurrent(uint8_t MCR, uint8_t MCG, uint8_t MCB)
-{
-  // Ensure max Current agrees with datasheet (3-bit)
-  if (MCR > 7)
-    MCR = 7;
-  _MCR = MCR;
-
-  // Ensure max Current agrees with datasheet (3-bit)
-  if (MCG > 7)
-    MCG = 7;
-  _MCG = MCG;
-
-  // Ensure max Current agrees with datasheet (3-bit)
-  if (MCB > 7)
-    MCB = 7;
-  _MCB = MCB;
-}
-
-void TLC5947::setMaxCurrent(uint8_t MCRGB)
-{
-  // Ensure max Current agrees with datasheet (3-bit)
-  if (MCRGB > 7)
-    MCRGB = 7;
-  _MCR = MCRGB;
-  _MCG = MCRGB;
-  _MCB = MCRGB;
-}
-
 // Defines functional bits in settings - see datasheet for what
 void TLC5947::setFunctionData(bool DSPRPT, bool TMGRST, bool RFRESH, bool ESPWM, bool LSDVLT)
 {
@@ -366,81 +294,8 @@ void TLC5947::setBrightnessCurrent(uint8_t red, uint8_t green, uint8_t blue)
   _bright_blue = blue;
 }
 
-// Sets all dot correction data to the same value (default should be 255
-void TLC5947::setAllDcData(uint8_t dcvalue)
-{
-  for (int8_t chip = _tlc_count - 1; chip >= 0; chip--)
-  {
-    for (int8_t a = LEDS_PER_CHIP - 1; a >= 0; a--)
-    {
-      for (int8_t b = COLOR_CHANNEL_COUNT - 1; b >= 0; b--)
-        _dc_data[chip][a][b] = dcvalue;
-    }
-  }
-}
 
-void TLC5947::setLedDc(uint16_t led_number, uint8_t color_channel_number, uint8_t dc_value)
-{
-  if (color_channel_number < COLOR_CHANNEL_COUNT)
-  {
-    uint8_t chip = (uint16_t)floor(led_number / LEDS_PER_CHIP);
-    uint8_t channel = (uint8_t)(led_number - LEDS_PER_CHIP * chip);
-    _dc_data[chip][channel][color_channel_number] = dc_value;
-  } else
-    Serial.println(F("ERROR (TLC5947::setLedDc) : Invalid color channel number"));
-}
 
-// Update the Control Register (changes settings)
-void TLC5947::updateControl()
-{
-  for (int8_t repeatCtr = 0; repeatCtr < CONTROL_WRITE_COUNT; repeatCtr++)
-  {
-    for (int8_t chip = _tlc_count - 1; chip >= 0; chip--)
-    {
-      if (debug >= 2)
-        Serial.println(F("Starting Control Mode... %s"));
-
-      _buffer_count = 7;
-      setControlModeBit(CONTROL_MODE_ON);
-
-      // Add CONTROL_ZERO_BITS blank bits to get to correct position for DC/FC
-      for (int16_t a = 0; a < CONTROL_ZERO_BITS; a++)
-        setBuffer(0);
-      // 5-bit Function Data
-      for (int8_t a = FC_BITS - 1; a >= 0; a--)
-        setBuffer((_function_data & (1 << a)));
-      // Blue Brightness
-      for (int8_t a = GB_BITS - 1; a >= 0; a--)
-        setBuffer((_bright_blue & (1 << a)));
-      // Green Brightness
-      for (int8_t a = GB_BITS - 1; a >= 0; a--)
-        setBuffer((_bright_green & (1 << a)));
-      // Red Brightness
-      for (int8_t a = GB_BITS - 1; a >= 0; a--)
-        setBuffer((_bright_red & (1 << a)));
-      // Maximum Current Data
-      for (int8_t a = MC_BITS - 1; a >= 0; a--)
-        setBuffer((_MCB & (1 << a)));
-      for (int8_t a = MC_BITS - 1; a >= 0; a--)
-        setBuffer((_MCG & (1 << a)));
-      for (int8_t a = MC_BITS - 1; a >= 0; a--)
-        setBuffer((_MCR & (1 << a)));
-
-      // Dot Correction data
-      for (int8_t a = LEDS_PER_CHIP - 1; a >= 0; a--)
-      {
-        for (int8_t b = COLOR_CHANNEL_COUNT - 1; b >= 0; b--)
-        {
-          for (int8_t c = 6; c >= 0; c--)
-            setBuffer(_dc_data[chip][a][b] & (1 << c));
-        }
-      }
-
-      // if (debug >= 2)
-    }
-    latch();
-  }
-}
 
 void TLC5947::latch()
 {
