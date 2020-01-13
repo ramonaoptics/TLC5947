@@ -222,14 +222,6 @@ void TLC5947::updateLeds(){
       // the 2 MSB nibbles, are 0xAB
       // The 1 LSB nibble is 0xC
 
-
-
-      // In jaehee's test code,
-      // pwm[0] is a number between
-      // 0x0000 and 0x0FFF
-      // the equivalent number to 0xABCD above is described as
-      // 0x0ABC
-
       // 12 bits per channel, send MSB first
       buffer[0] =                             (pwm[1] & 0xFF00) >> 8;
       buffer[1] = ((pwm[0] & 0xF000) >> 8) + ((pwm[1] & 0x00F0) << 4);
