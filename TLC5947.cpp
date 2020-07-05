@@ -160,7 +160,7 @@ void TLC5947::setAllLedRgb(uint16_t red, uint16_t green, uint16_t blue)
 
 
 // Returns 1 if the current is too high.
-int TLC5947::enforceMaxCurrent(uint32_t * output_counts_ptr(){
+int TLC5947::enforceMaxCurrent(uint32_t * output_counts_ptr){
   if (enforce_max_current)
   {
     // Get number of counts for current pattern
