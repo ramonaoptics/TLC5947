@@ -105,7 +105,7 @@ static uint8_t _latches[];
 uint8_t rgb_order_default[3] = {0, 1, 2};
 
 private:
-  int enforceMaxCurrent();
+  int enforceMaxCurrent(uint32_t * output_counts_ptr=nullptr);
   int debug = 0;
   int _num_latches;
   int _num_tlc_one_row;

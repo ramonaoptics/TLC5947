@@ -160,7 +160,7 @@ void TLC5947::setAllLedRgb(uint16_t red, uint16_t green, uint16_t blue)
 
 
 // Returns 1 if the current is too high.
-int TLC5947::enforceMaxCurrent(){
+int TLC5947::enforceMaxCurrent(uint32_t * output_counts_ptr(){
   if (enforce_max_current)
   {
     // Get number of counts for current pattern
@@ -170,6 +170,10 @@ int TLC5947::enforceMaxCurrent(){
         for (int8_t color_channel_index = (int8_t)COLOR_CHANNEL_COUNT - 1; color_channel_index >= 0; color_channel_index--)
           power_output_counts += _grayscale_data[chip][led_channel_index][color_channel_index];
 
+
+    if (output_counts_ptr != nullptr) {
+      *output_counts_ptr = power_output_counts;
+    }
     double power_output_amps = ((double)power_output_counts / (double)UINT16_MAX) * LED_CURRENT_AMPS;
     if (power_output_amps > max_current_amps)
     {
@@ -186,11 +190,15 @@ int TLC5947::enforceMaxCurrent(){
 void TLC5947::updateLeds(){
   uint8_t buffer[3];
   uint16_t pwm[2];
-  int current_too_high = enforceMaxCurrent();
+  uint32_t total_output_counts;
+  int current_too_high = enforceMaxCurrent(&total_output_counts);
+  digitalWrite(_blank, HIGH);
+  if (total_output_counts == 0) {
+    return;
+  }
   if (current_too_high != 0){
     return;
   }
-  digitalWrite(_blank, HIGH);
   if (debug >= 2)
   {
     Serial.println(F("Begin LED Update String (All Chips)..."));
