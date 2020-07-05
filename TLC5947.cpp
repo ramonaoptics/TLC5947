@@ -191,8 +191,6 @@ int TLC5947::enforceMaxCurrent(uint32_t * output_counts_ptr){
   return 0;
 }
 void TLC5947::updateLeds(){
-  uint8_t buffer[3];
-  uint16_t pwm[2];
   uint32_t total_output_counts;
   int current_too_high = enforceMaxCurrent(&total_output_counts);
   if (total_output_counts == 0) {
@@ -210,6 +208,8 @@ void TLC5947::updateLeds(){
   }
 }
 void TLC5948::updateLeds_1D(){
+  uint8_t buffer[3];
+  uint16_t pwm[2];
   // ASSUMING that _grayscale_data is declared as [][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT]
   SPI.beginTransaction(mSettings);
   for (int latch_index = _num_latches-1; latch_index>=0; latch_index--)
@@ -259,6 +259,8 @@ void TLC5948::updateLeds_1D(){
 }
 
 void TLC5948::updateLeds_2D(){
+  uint8_t buffer[3];
+  uint16_t pwm[2];
   digitalWrite(_blank, HIGH);
 
   // ASSUMING that _grayscale_data is declared as [][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT]
