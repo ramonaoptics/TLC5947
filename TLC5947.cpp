@@ -251,7 +251,7 @@ void TLC5947::updateLeds_1D(){
   } //end of latch loop
 
   SPI.endTransaction();
-  for (latch_index=0; latch_index < num_latches; latch++){
+  for (int latch_index=0; latch_index < num_latches; latch_index++){
     latch(latch_index);
   }
 
