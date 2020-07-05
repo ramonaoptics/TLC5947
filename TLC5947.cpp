@@ -207,7 +207,7 @@ void TLC5947::updateLeds(){
     updateLeds_1D();
   }
 }
-void TLC5948::updateLeds_1D(){
+void TLC5947::updateLeds_1D(){
   uint8_t buffer[3];
   uint16_t pwm[2];
   // ASSUMING that _grayscale_data is declared as [][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT]
@@ -258,7 +258,7 @@ void TLC5948::updateLeds_1D(){
   digitalWrite(_blank, LOW);
 }
 
-void TLC5948::updateLeds_2D(){
+void TLC5947::updateLeds_2D(){
   uint8_t buffer[3];
   uint16_t pwm[2];
   digitalWrite(_blank, HIGH);
