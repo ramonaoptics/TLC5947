@@ -109,7 +109,6 @@ private:
   void updateLeds_2D();
   void updateLeds_1D();
   int enforceMaxCurrent(uint32_t * output_counts_ptr=nullptr);
-  int debug = 0;
   int _num_latches;
   int _num_tlc_one_row;
   uint8_t _use_2D;

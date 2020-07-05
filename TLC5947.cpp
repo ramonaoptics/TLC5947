@@ -256,10 +256,6 @@ void TLC5948::updateLeds_1D(){
   }
 
   digitalWrite(_blank, LOW);
-  if (debug >= 2)
-  {
-    Serial.println(F("End LED Update String (All Chips)"));
-  }
 }
 
 void TLC5948::updateLeds_2D(){
@@ -307,10 +303,6 @@ void TLC5948::updateLeds_2D(){
 
   } //end of latch loop
   digitalWrite(_blank, LOW);
-  if (debug >= 2)
-  {
-    Serial.println(F("End LED Update String (All Chips)"));
-  }
 }
 
 void TLC5947::setChannel(uint16_t channel_number, uint16_t value)
@@ -399,9 +391,6 @@ void TLC5947::setBuffer(uint8_t bit)
   SPI.beginTransaction(mSettings);
   if (_buffer_count == -1)
   {
-    if (debug >= 2)
-      printByte(_buffer);
-
     SPI.transfer(_buffer);
     _buffer_count = 7;
     _buffer = 0;
