@@ -53,7 +53,8 @@ class TLC5947
 public:
 
 /* Initialization */
-void init(int8_t num_latches, int8_t num_tlc_one_row, uint8_t spi_mosi, uint8_t spi_clk, uint8_t blank);
+void init(int8_t num_latches, int8_t num_tlc_one_row, uint8_t use_2D,
+          uint8_t spi_mosi, uint8_t spi_clk, uint8_t blank);
 void deallocate();
 
 /* Setting individual LED intensities */
@@ -105,10 +106,12 @@ static uint8_t _latches[];
 uint8_t rgb_order_default[3] = {0, 1, 2};
 
 private:
+  void updateLeds_2D();
+  void updateLeds_1D();
   int enforceMaxCurrent(uint32_t * output_counts_ptr=nullptr);
-  int debug = 0;
   int _num_latches;
   int _num_tlc_one_row;
+  uint8_t _use_2D;
   uint8_t _spi_mosi;
   uint8_t _spi_clk;
   uint8_t _blank;

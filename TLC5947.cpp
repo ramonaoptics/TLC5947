@@ -29,13 +29,16 @@
 
 #include "TLC5947.h"
 
-void TLC5947::init(int8_t num_latches, int8_t num_tlc_one_row, uint8_t spi_mosi, uint8_t spi_clk, uint8_t blank)
+void TLC5947::init(int8_t num_latches, int8_t num_tlc_one_row, uint8_t use_2D,
+                   uint8_t spi_mosi, uint8_t spi_clk, uint8_t blank)
 {
   _num_tlc_one_row = num_tlc_one_row;
   _num_latches = num_latches;
   _spi_clk = spi_clk;
   _spi_mosi = spi_mosi;
   _blank = blank;
+
+  _use_2D = use_2D;
 
   // Initialize SPI library
   SPI.setMOSI(_spi_mosi);
@@ -188,29 +191,79 @@ int TLC5947::enforceMaxCurrent(uint32_t * output_counts_ptr){
   return 0;
 }
 void TLC5947::updateLeds(){
-  uint8_t buffer[3];
-  uint16_t pwm[2];
-  uint32_t total_output_counts;
+  uint32_t total_output_counts = 0;
   int current_too_high = enforceMaxCurrent(&total_output_counts);
-  digitalWrite(_blank, HIGH);
   if (total_output_counts == 0) {
+    digitalWrite(_blank, HIGH);
     return;
   }
   if (current_too_high != 0){
     return;
   }
-  if (debug >= 2)
+
+  if (_use_2D){
+    updateLeds_2D();
+  } else {
+    updateLeds_1D();
+  }
+}
+void TLC5947::updateLeds_1D(){
+  uint8_t buffer[3];
+  uint16_t pwm[2];
+  // ASSUMING that _grayscale_data is declared as [][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT]
+  SPI.beginTransaction(mSettings);
+  for (int latch_index = _num_latches-1; latch_index>=0; latch_index--)
   {
-    Serial.println(F("Begin LED Update String (All Chips)..."));
+    for (int chip = _num_latches * _num_tlc_one_row - (_num_latches - latch_index);
+              chip >= 0;
+              chip-=_num_latches)
+    {
+      Serial.println(chip);
+      for (int8_t led_channel_index = (int8_t)(LEDS_PER_CHIP * COLOR_CHANNEL_COUNT - 2);
+              led_channel_index >= 0;
+              led_channel_index-=2)
+      {
+        // color_channel_ordered = _rgb_order[chip][led_channel_index][(uint8_t) color_channel_index];
+        // color_channel_ordered = _rgb_order[chip][led_channel_index][(uint8_t) color_channel_index];
+        pwm[0] = getLEDValuePerChip(chip, led_channel_index);
+        pwm[1] = getLEDValuePerChip(chip, led_channel_index + 1);
+        // pwm[0] is a number between
+        // 0x0000 and 0xFFFF
+        // in the illuminate library
+        // Consider the number 0xABCD
+        // We don't have enough precision to change the LED brightness based on the
+        // 4 LSB bits.
+        // Therefore, we only consider
+        // 0xABCX
+        // the 2 MSB nibbles, are 0xAB
+        // The 1 LSB nibble is 0xC
+
+        // 12 bits per channel, send MSB first
+        buffer[0] =                              (pwm[1] & 0xFF00) >> 8;
+        buffer[1] = ((pwm[0] & 0xF000) >> 12) + ((pwm[1] & 0x00F0) << 0);
+        buffer[2] =  (pwm[0] & 0x0FF0) >> 4;
+        SPI.transfer(buffer[0]);
+        SPI.transfer(buffer[1]);
+        SPI.transfer(buffer[2]);
+      }
+    }
+
+  } //end of latch loop
+
+  SPI.endTransaction();
+  for (int latch_index=0; latch_index < _num_latches; latch_index++){
+    latch(latch_index);
   }
 
-  // ASSUMING that _grayscale_data is declared as [][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT]
-  // uint16_t *grayscale_data_2D[LEDS_PER_CHIP* COLOR_CHANNEL_COUNT];
-  // grayscale_data_2D = &(_grayscale_data[0][0][0]);
+  digitalWrite(_blank, LOW);
+}
 
-  // uint32_t power_output_counts = 0;
-  // pwmbuffer = (uint16_t *)malloc(sizeof(uint16_t) * NUM_LEDS_PER_DRIVER * n_tlc5947);
-  // memset(pwmbuffer, 0, sizeof(uint16_t) *  NUM_LEDS_PER_DRIVER * n_tlc5947);
+void TLC5947::updateLeds_2D(){
+  uint8_t buffer[3];
+  uint16_t pwm[2];
+  digitalWrite(_blank, HIGH);
+
+  // ASSUMING that _grayscale_data is declared as [][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT]
   for (int latch_index = _num_latches-1; latch_index>=0; latch_index--)
   {
     SPI.beginTransaction(mSettings);
@@ -252,10 +305,6 @@ void TLC5947::updateLeds(){
 
   } //end of latch loop
   digitalWrite(_blank, LOW);
-  if (debug >= 2)
-  {
-    Serial.println(F("End LED Update String (All Chips)"));
-  }
 }
 
 void TLC5947::setChannel(uint16_t channel_number, uint16_t value)
@@ -344,9 +393,6 @@ void TLC5947::setBuffer(uint8_t bit)
   SPI.beginTransaction(mSettings);
   if (_buffer_count == -1)
   {
-    if (debug >= 2)
-      printByte(_buffer);
-
     SPI.transfer(_buffer);
     _buffer_count = 7;
     _buffer = 0;
