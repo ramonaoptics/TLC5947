@@ -28,6 +28,13 @@
 */
 
 #include "TLC5947.h"
+#include <SPI.h>
+
+#define TLC5947_SPI_MODE SPI_MODE0
+#define SPI_DELAY_US 0
+
+/* Bit Quantities (Change to match other TLC driver chips) */
+#define LATCH_DELAY 1
 
 void TLC5947::init(int8_t num_latches, int8_t num_tlc_one_row, uint8_t use_2D,
                    uint8_t spi_mosi, uint8_t spi_clk, uint8_t blank)
@@ -56,9 +63,6 @@ void TLC5947::init(int8_t num_latches, int8_t num_tlc_one_row, uint8_t use_2D,
   pinMode(_blank, OUTPUT);
   digitalWrite(_blank, HIGH);
 
-  // Define baud rate
-  SPISettings mSettings(spi_baud_rate, MSBFIRST, SPI_MODE0);
-
   // Set default color channel indicies
   setRgbPinOrder(rgb_order_default[0], rgb_order_default[1], rgb_order_default[2]);
 }
@@ -67,9 +71,6 @@ void TLC5947::setSpiBaudRate(uint32_t new_baud_rate)
 {
   // Store old baud rate
   spi_baud_rate = new_baud_rate;
-
-  // Define baud rate
-  SPISettings mSettings(spi_baud_rate, MSBFIRST, SPI_MODE0);
 }
 
 uint32_t TLC5947::getSpiBaudRate()
@@ -119,17 +120,6 @@ void TLC5947::setRgbPinOrderSingle(uint16_t led_number, uint8_t rPos, uint8_t gr
   _rgb_order[chip][channel][0] = rPos;
   _rgb_order[chip][channel][1] = grPos;
   _rgb_order[chip][channel][2] = bPos;
-}
-
-void TLC5947::printByte(byte my_byte)
-{
-  for (byte mask = 0x80; mask; mask >>= 1)
-  {
-    if (mask  & my_byte)
-      Serial.print('1');
-    else
-      Serial.print('0');
-  }
 }
 
 void TLC5947::setAllLed(uint16_t gsvalue)
@@ -211,7 +201,7 @@ void TLC5947::updateLeds_1D(){
   uint8_t buffer[3];
   uint16_t pwm[2];
   // ASSUMING that _grayscale_data is declared as [][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT]
-  SPI.beginTransaction(mSettings);
+  SPI.beginTransaction(SPISettings(spi_baud_rate, MSBFIRST, TLC5947_SPI_MODE));
   for (int latch_index = _num_latches-1; latch_index>=0; latch_index--)
   {
     for (int chip = _num_latches * _num_tlc_one_row - (_num_latches - latch_index);
@@ -243,17 +233,26 @@ void TLC5947::updateLeds_1D(){
         buffer[1] = ((pwm[0] & 0xF000) >> 12) + ((pwm[1] & 0x00F0) << 0);
         buffer[2] =  (pwm[0] & 0x0FF0) >> 4;
         SPI.transfer(buffer[0]);
+#if SPI_DELAY_US != 0
+        delayMicroseconds(SPI_DELAY_US);
+#endif
         SPI.transfer(buffer[1]);
+#if SPI_DELAY_US != 0
+        delayMicroseconds(SPI_DELAY_US);
+#endif
         SPI.transfer(buffer[2]);
+#if SPI_DELAY_US != 0
+        delayMicroseconds(SPI_DELAY_US);
+#endif
       }
     }
 
   } //end of latch loop
 
-  SPI.endTransaction();
   for (int latch_index=0; latch_index < _num_latches; latch_index++){
     latch(latch_index);
   }
+  SPI.endTransaction();
 
   digitalWrite(_blank, LOW);
 }
@@ -266,7 +265,7 @@ void TLC5947::updateLeds_2D(){
   // ASSUMING that _grayscale_data is declared as [][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT]
   for (int latch_index = _num_latches-1; latch_index>=0; latch_index--)
   {
-    SPI.beginTransaction(mSettings);
+    SPI.beginTransaction(SPISettings(spi_baud_rate, MSBFIRST, TLC5947_SPI_MODE));
     for (int chip = _num_latches * _num_tlc_one_row - (_num_latches - latch_index);
               chip >= 0;
               chip-=_num_latches)
@@ -296,12 +295,21 @@ void TLC5947::updateLeds_2D(){
         buffer[1] = ((pwm[0] & 0xF000) >> 12) + ((pwm[1] & 0x00F0) << 0);
         buffer[2] =  (pwm[0] & 0x0FF0) >> 4;
         SPI.transfer(buffer[0]);
+#if SPI_DELAY_US != 0
+        delayMicroseconds(SPI_DELAY_US);
+#endif
         SPI.transfer(buffer[1]);
+#if SPI_DELAY_US != 0
+        delayMicroseconds(SPI_DELAY_US);
+#endif
         SPI.transfer(buffer[2]);
+#if SPI_DELAY_US != 0
+        delayMicroseconds(SPI_DELAY_US);
+#endif
       }
     }
-    SPI.endTransaction();
     latch(latch_index);
+    SPI.endTransaction();
 
   } //end of latch loop
   digitalWrite(_blank, LOW);
@@ -382,20 +390,4 @@ uint16_t TLC5947::getLEDValuePerChip(uint16_t chip, int led_number){
   int color_channel_index = led_number % COLOR_CHANNEL_COUNT;
   int channel = led_number / COLOR_CHANNEL_COUNT;
   return _grayscale_data[chip][channel][color_channel_index];
-}
-
-// SPI interface - accumulates single bits, then sends over SPI
-// interface once we accumulate 8 bits
-void TLC5947::setBuffer(uint8_t bit)
-{
-  bitWrite(_buffer, _buffer_count, bit);
-  _buffer_count--;
-  SPI.beginTransaction(mSettings);
-  if (_buffer_count == -1)
-  {
-    SPI.transfer(_buffer);
-    _buffer_count = 7;
-    _buffer = 0;
-  }
-  SPI.endTransaction();
 }

@@ -33,15 +33,8 @@
 #ifndef TLC5947_H
 #define TLC5947_H
 
-#include <SPI.h>
-#include <Arduino.h>
-
-/* Bit Quantities (Change to match other TLC driver chips) */
-#define LATCH_DELAY 1
-
-// Serial baud rate
-#define SPI_BAUD_RATE 1500000
-
+//#include <Arduino.h>
+#include <stdint.h>
 // LED Current OUTPUT
 static const float LED_CURRENT_AMPS = 0.020;
 
@@ -77,9 +70,6 @@ void setRgbPinOrder(uint8_t rPos, uint8_t grPos, uint8_t bPos);
 void setPinOrderSingle(uint16_t channel, uint8_t color_channel_index, uint8_t position);
 void setRgbPinOrderSingle(uint16_t channel, uint8_t rPos, uint8_t grPos, uint8_t bPos);
 
-/* Sending data to device (Updating, flushing, latching) */
-void setBuffer(uint8_t bit);
-
 void updateLeds();
 void latch(int latch_index);
 void setSpiBaudRate(uint32_t new_baud_rate);
@@ -88,9 +78,6 @@ uint32_t getSpiBaudRate();
 // illuminate might be calling these grayscale freq even though not used.
 void setGsclkFreq(uint32_t new_gsclk_frequency);
 uint32_t getGsclkFreq();
-
-/* Diagnostic Methods */
-void printByte(byte myByte);
 
 static const int _tlc_count; //
 static const int latch_index;
@@ -119,7 +106,6 @@ private:
   /* SPI */
   uint8_t _buffer;
   int8_t _buffer_count = 7;
-  SPISettings mSettings;
   uint32_t spi_baud_rate = 1000000;
 };
 
