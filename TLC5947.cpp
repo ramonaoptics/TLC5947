@@ -45,6 +45,8 @@ void TLC5947::init(int8_t num_latches, int8_t num_tlc_one_row, uint8_t use_2D,
   _spi_mosi = spi_mosi;
   _blank = blank;
 
+  mSettings = SPISettings(spi_baud_rate, MSBFIRST, SPI_MODE0);
+
   _use_2D = use_2D;
 
   // Initialize SPI library
@@ -71,6 +73,9 @@ void TLC5947::setSpiBaudRate(uint32_t new_baud_rate)
 {
   // Store old baud rate
   spi_baud_rate = new_baud_rate;
+
+  // update mSettings
+  mSettings = SPISettings(spi_baud_rate, MSBFIRST, SPI_MODE0);
 }
 
 uint32_t TLC5947::getSpiBaudRate()
@@ -201,7 +206,7 @@ void TLC5947::updateLeds_1D(){
   uint8_t buffer[3];
   uint16_t pwm[2];
   // ASSUMING that _grayscale_data is declared as [][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT]
-  SPI.beginTransaction(SPISettings(spi_baud_rate, MSBFIRST, TLC5947_SPI_MODE));
+  SPI.beginTransaction(mSettings);
   for (int latch_index = _num_latches-1; latch_index>=0; latch_index--)
   {
     for (int chip = _num_latches * _num_tlc_one_row - (_num_latches - latch_index);
@@ -265,7 +270,7 @@ void TLC5947::updateLeds_2D(){
   // ASSUMING that _grayscale_data is declared as [][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT]
   for (int latch_index = _num_latches-1; latch_index>=0; latch_index--)
   {
-    SPI.beginTransaction(SPISettings(spi_baud_rate, MSBFIRST, TLC5947_SPI_MODE));
+    SPI.beginTransaction(mSettings);
     for (int chip = _num_latches * _num_tlc_one_row - (_num_latches - latch_index);
               chip >= 0;
               chip-=_num_latches)
