@@ -315,6 +315,52 @@ void TLC5947::updateLeds_2D(){
   digitalWrite(_blank, LOW);
 }
 
+void TLC5947::clearLeds()
+{
+   uint8_t buffer[3];
+  uint16_t pwm[2];
+  digitalWrite(_blank, HIGH);
+
+  for (int latch_index = _num_latches-1; latch_index>=0; latch_index--)
+  {
+    SPI.beginTransaction(SPISettings(spi_baud_rate, MSBFIRST, TLC5947_SPI_MODE));
+    for (int chip = _num_latches * _num_tlc_one_row - (_num_latches - latch_index);
+              chip >= 0;
+              chip-=_num_latches)
+    {
+      Serial.println(chip);
+      for (int8_t led_channel_index = (int8_t)(LEDS_PER_CHIP * COLOR_CHANNEL_COUNT - 2);
+              led_channel_index >= 0;
+              led_channel_index-=2)
+      {
+        pwm[0] = 0x0000;
+        pwm[1] = 0x0000;
+
+        // 12 bits per channel, send MSB first
+        buffer[0] =                              (pwm[1] & 0xFF00) >> 8;
+        buffer[1] = ((pwm[0] & 0xF000) >> 12) + ((pwm[1] & 0x00F0) << 0);
+        buffer[2] =  (pwm[0] & 0x0FF0) >> 4;
+        SPI.transfer(buffer[0]);
+#if SPI_DELAY_US != 0
+        delayMicroseconds(SPI_DELAY_US);
+#endif
+        SPI.transfer(buffer[1]);
+#if SPI_DELAY_US != 0
+        delayMicroseconds(SPI_DELAY_US);
+#endif
+        SPI.transfer(buffer[2]);
+#if SPI_DELAY_US != 0
+        delayMicroseconds(SPI_DELAY_US);
+#endif
+      }
+    }
+    latch(latch_index);
+    SPI.endTransaction();
+
+  } //end of latch loop
+  digitalWrite(_blank, LOW);
+}
+
 void TLC5947::setChannel(uint16_t channel_number, uint16_t value)
 {
   // Change to multi-channel indexing
