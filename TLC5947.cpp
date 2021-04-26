@@ -188,10 +188,6 @@ int TLC5947::enforceMaxCurrent(uint32_t * output_counts_ptr){
 void TLC5947::updateLeds(){
   uint32_t total_output_counts = 0;
   int current_too_high = enforceMaxCurrent(&total_output_counts);
-  if (total_output_counts == 0) {
-    digitalWrite(_blank, HIGH);
-    return;
-  }
   if (current_too_high != 0){
     return;
   }
@@ -200,6 +196,13 @@ void TLC5947::updateLeds(){
     updateLeds_2D();
   } else {
     updateLeds_1D();
+  }
+
+  if (total_output_counts == 0) {
+    // Setting the blank to high sets the chips into a low power state avoiding
+    // them getting hot.
+    digitalWrite(_blank, HIGH);
+    return;
   }
 }
 void TLC5947::updateLeds_1D(){
