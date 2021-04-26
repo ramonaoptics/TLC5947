@@ -35,6 +35,8 @@
 
 //#include <Arduino.h>
 #include <stdint.h>
+#include <SPI.h>
+
 // LED Current OUTPUT
 static const float LED_CURRENT_AMPS = 0.020;
 
@@ -107,6 +109,8 @@ private:
   uint8_t _buffer;
   int8_t _buffer_count = 7;
   uint32_t spi_baud_rate = 1000000;
+
+  SPISettings mSettings;
 };
 
 #endif
