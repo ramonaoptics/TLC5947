@@ -97,7 +97,7 @@ uint8_t rgb_order_default[3] = {0, 1, 2};
 
 private:
   void updateLeds_2D();
-  void updateLeds_1D();
+  void updateLeds_1D(uint16_t);
   int enforceMaxCurrent(uint32_t * output_counts_ptr=nullptr);
   int _num_latches;
   int _num_tlc_one_row;
