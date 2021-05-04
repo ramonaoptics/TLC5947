@@ -197,9 +197,9 @@ void TLC5947::updateLeds(){
     updateLeds_1D();
   }
 }
-void TLC5947::updateLeds_1D(){
+void TLC5947::updateLeds_1D(uint16_t pwm = NaN){
   uint8_t buffer[3];
-  uint16_t pwm[2];
+  uint16_t pwm[2] = {const_value, const_value};
   // ASSUMING that _grayscale_data is declared as [][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT]
   SPI.beginTransaction(SPISettings(spi_baud_rate, MSBFIRST, TLC5947_SPI_MODE));
   for (int latch_index = _num_latches-1; latch_index>=0; latch_index--)
@@ -208,15 +208,16 @@ void TLC5947::updateLeds_1D(){
               chip >= 0;
               chip-=_num_latches)
     {
-      Serial.println(chip);
       for (int8_t led_channel_index = (int8_t)(LEDS_PER_CHIP * COLOR_CHANNEL_COUNT - 2);
               led_channel_index >= 0;
               led_channel_index-=2)
       {
         // color_channel_ordered = _rgb_order[chip][led_channel_index][(uint8_t) color_channel_index];
         // color_channel_ordered = _rgb_order[chip][led_channel_index][(uint8_t) color_channel_index];
-        pwm[0] = getLEDValuePerChip(chip, led_channel_index);
-        pwm[1] = getLEDValuePerChip(chip, led_channel_index + 1);
+        if !isnan(pwm) {
+            pwm[0] = getLEDValuePerChip(chip, led_channel_index);
+            pwm[1] = getLEDValuePerChip(chip, led_channel_index + 1);
+        }
         // pwm[0] is a number between
         // 0x0000 and 0xFFFF
         // in the illuminate library
@@ -270,7 +271,6 @@ void TLC5947::updateLeds_2D(){
               chip >= 0;
               chip-=_num_latches)
     {
-      Serial.println(chip);
       for (int8_t led_channel_index = (int8_t)(LEDS_PER_CHIP * COLOR_CHANNEL_COUNT - 2);
               led_channel_index >= 0;
               led_channel_index-=2)

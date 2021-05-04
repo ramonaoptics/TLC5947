@@ -30,6 +30,8 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <math.h>
+
 #ifndef TLC5947_H
 #define TLC5947_H
 
