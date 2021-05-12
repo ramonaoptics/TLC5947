@@ -202,9 +202,7 @@ void TLC5947::updateLeds(){
     updateLeds_1D();
   }
 }
-void TLC5947::updateLeds_1D(){
-  uint8_t buffer[3];
-  uint16_t pwm[2];
+void TLC5947::updateLeds_1D(uint16_t *const_value){
   // ASSUMING that _grayscale_data is declared as [][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT]
   SPI.beginTransaction(mSettings);
   for (int latch_index = _num_latches-1; latch_index>=0; latch_index--)
@@ -213,43 +211,7 @@ void TLC5947::updateLeds_1D(){
               chip >= 0;
               chip-=_num_latches)
     {
-      Serial.println(chip);
-      for (int8_t led_channel_index = (int8_t)(LEDS_PER_CHIP * COLOR_CHANNEL_COUNT - 2);
-              led_channel_index >= 0;
-              led_channel_index-=2)
-      {
-        // color_channel_ordered = _rgb_order[chip][led_channel_index][(uint8_t) color_channel_index];
-        // color_channel_ordered = _rgb_order[chip][led_channel_index][(uint8_t) color_channel_index];
-        pwm[0] = getLEDValuePerChip(chip, led_channel_index);
-        pwm[1] = getLEDValuePerChip(chip, led_channel_index + 1);
-        // pwm[0] is a number between
-        // 0x0000 and 0xFFFF
-        // in the illuminate library
-        // Consider the number 0xABCD
-        // We don't have enough precision to change the LED brightness based on the
-        // 4 LSB bits.
-        // Therefore, we only consider
-        // 0xABCX
-        // the 2 MSB nibbles, are 0xAB
-        // The 1 LSB nibble is 0xC
-
-        // 12 bits per channel, send MSB first
-        buffer[0] =                              (pwm[1] & 0xFF00) >> 8;
-        buffer[1] = ((pwm[0] & 0xF000) >> 12) + ((pwm[1] & 0x00F0) << 0);
-        buffer[2] =  (pwm[0] & 0x0FF0) >> 4;
-        SPI.transfer(buffer[0]);
-#if SPI_DELAY_US != 0
-        delayMicroseconds(SPI_DELAY_US);
-#endif
-        SPI.transfer(buffer[1]);
-#if SPI_DELAY_US != 0
-        delayMicroseconds(SPI_DELAY_US);
-#endif
-        SPI.transfer(buffer[2]);
-#if SPI_DELAY_US != 0
-        delayMicroseconds(SPI_DELAY_US);
-#endif
-      }
+        updateChip_Leds(chip, const_value);
     }
 
   } //end of latch loop
@@ -262,11 +224,8 @@ void TLC5947::updateLeds_1D(){
   digitalWrite(_blank, LOW);
 }
 
-void TLC5947::updateLeds_2D(){
-  uint8_t buffer[3];
-  uint16_t pwm[2];
+void TLC5947::updateLeds_2D(uint16_t *const_value){
   digitalWrite(_blank, HIGH);
-
   // ASSUMING that _grayscale_data is declared as [][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT]
   for (int latch_index = _num_latches-1; latch_index>=0; latch_index--)
   {
@@ -275,15 +234,32 @@ void TLC5947::updateLeds_2D(){
               chip >= 0;
               chip-=_num_latches)
     {
-      Serial.println(chip);
-      for (int8_t led_channel_index = (int8_t)(LEDS_PER_CHIP * COLOR_CHANNEL_COUNT - 2);
+        updateChip_Leds(chip, const_value);
+    }
+    latch(latch_index);
+    SPI.endTransaction();
+
+  } //end of latch loop
+  digitalWrite(_blank, LOW);
+}
+
+void TLC5947::updateChip_Leds(uint8_t chip, uint16_t * const_value){
+    uint16_t pwm[2];
+    uint8_t buffer[3];
+    for (int8_t led_channel_index = (int8_t)(LEDS_PER_CHIP * COLOR_CHANNEL_COUNT - 2);
               led_channel_index >= 0;
               led_channel_index-=2)
       {
         // color_channel_ordered = _rgb_order[chip][led_channel_index][(uint8_t) color_channel_index];
         // color_channel_ordered = _rgb_order[chip][led_channel_index][(uint8_t) color_channel_index];
-        pwm[0] = getLEDValuePerChip(chip, led_channel_index);
-        pwm[1] = getLEDValuePerChip(chip, led_channel_index + 1);
+        if (const_value == nullptr) {
+            pwm[0] = getLEDValuePerChip(chip, led_channel_index);
+            pwm[1] = getLEDValuePerChip(chip, led_channel_index + 1);
+        }
+        else {
+            pwm[0] = *const_value;
+            pwm[1] = *const_value;
+        }
         // pwm[0] is a number between
         // 0x0000 and 0xFFFF
         // in the illuminate library
@@ -312,12 +288,17 @@ void TLC5947::updateLeds_2D(){
         delayMicroseconds(SPI_DELAY_US);
 #endif
       }
-    }
-    latch(latch_index);
-    SPI.endTransaction();
+}
 
-  } //end of latch loop
-  digitalWrite(_blank, LOW);
+void TLC5947::clearLeds()
+{
+    uint16_t value = 0x0000;
+    uint16_t * value_pointer = &value;
+    if (_use_2D){
+        updateLeds_2D(value_pointer);
+    } else {
+        updateLeds_1D(value_pointer);
+    }
 }
 
 void TLC5947::setChannel(uint16_t channel_number, uint16_t value)

@@ -30,6 +30,8 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <math.h>
+
 #ifndef TLC5947_H
 #define TLC5947_H
 
@@ -73,6 +75,7 @@ void setPinOrderSingle(uint16_t channel, uint8_t color_channel_index, uint8_t po
 void setRgbPinOrderSingle(uint16_t channel, uint8_t rPos, uint8_t grPos, uint8_t bPos);
 
 void updateLeds();
+void clearLeds();
 void latch(int latch_index);
 void setSpiBaudRate(uint32_t new_baud_rate);
 uint32_t getSpiBaudRate();
@@ -95,8 +98,9 @@ static uint8_t _latches[];
 uint8_t rgb_order_default[3] = {0, 1, 2};
 
 private:
-  void updateLeds_2D();
-  void updateLeds_1D();
+  void updateLeds_2D(uint16_t * const_value=nullptr);
+  void updateLeds_1D(uint16_t * const_value=nullptr);
+  void updateChip_Leds(uint8_t chip, uint16_t * const_value);
   int enforceMaxCurrent(uint32_t * output_counts_ptr=nullptr);
   int _num_latches;
   int _num_tlc_one_row;
