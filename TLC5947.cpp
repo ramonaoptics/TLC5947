@@ -225,7 +225,6 @@ void TLC5947::updateLeds_1D(uint16_t *const_value){
 }
 
 void TLC5947::updateLeds_2D(uint16_t *const_value){
-  digitalWrite(_blank, HIGH);
   // ASSUMING that _grayscale_data is declared as [][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT]
   for (int latch_index = _num_latches-1; latch_index>=0; latch_index--)
   {
