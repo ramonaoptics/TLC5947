@@ -72,7 +72,7 @@ void setRgbPinOrder(uint8_t rPos, uint8_t grPos, uint8_t bPos);
 void setPinOrderSingle(uint16_t channel, uint8_t color_channel_index, uint8_t position);
 void setRgbPinOrderSingle(uint16_t channel, uint8_t rPos, uint8_t grPos, uint8_t bPos);
 
-void updateLeds();
+int updateLeds();
 void latch(int latch_index);
 void setSpiBaudRate(uint32_t new_baud_rate);
 uint32_t getSpiBaudRate();

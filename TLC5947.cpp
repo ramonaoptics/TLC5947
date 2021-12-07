@@ -185,12 +185,12 @@ int TLC5947::enforceMaxCurrent(uint32_t * output_counts_ptr){
   }
   return 0;
 }
-void TLC5947::updateLeds(){
+int TLC5947::updateLeds(){
   uint32_t total_output_counts = 0;
   int current_too_high = enforceMaxCurrent(&total_output_counts);
   if (total_output_counts == 0) {
     digitalWrite(_blank, HIGH);
-    return;
+    return 1;
   }
   if (current_too_high != 0){
     return;
@@ -201,6 +201,7 @@ void TLC5947::updateLeds(){
   } else {
     updateLeds_1D();
   }
+  return 0;
 }
 void TLC5947::updateLeds_1D(){
   uint8_t buffer[3];
