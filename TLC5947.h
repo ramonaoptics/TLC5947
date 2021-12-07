@@ -39,12 +39,6 @@
 #include <stdint.h>
 #include <SPI.h>
 
-// LED Current OUTPUT
-static const float LED_CURRENT_AMPS = 0.020;
-
-// Line ending for serial output
-static const char LINE_ENDING[] = "\n";
-
 class TLC5947
 {
 public:
@@ -114,6 +108,7 @@ private:
   int8_t _buffer_count = 7;
   uint32_t spi_baud_rate = 1000000;
 
+  const double maxCurrentValue = 0.02;
   SPISettings mSettings;
 };
 

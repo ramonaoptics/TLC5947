@@ -172,7 +172,7 @@ int TLC5947::enforceMaxCurrent(uint32_t * output_counts_ptr){
     if (output_counts_ptr != nullptr) {
       *output_counts_ptr = power_output_counts;
     }
-    double power_output_amps = ((double)power_output_counts / (double)UINT16_MAX) * LED_CURRENT_AMPS;
+    double power_output_amps = ((double)power_output_counts / (double)UINT16_MAX) * maxCurrentValue;
     if (power_output_amps > max_current_amps)
     {
       Serial.print(F("Current output ("));
@@ -185,15 +185,19 @@ int TLC5947::enforceMaxCurrent(uint32_t * output_counts_ptr){
   }
   return 0;
 }
-int TLC5947::updateLeds(){
-  uint32_t total_output_counts = 0;
-  int current_too_high = enforceMaxCurrent(&total_output_counts);
-  if (total_output_counts == 0) {
-    digitalWrite(_blank, HIGH);
-    return 1;
+int TLC5947::updateLeds(double* output_current) {
+
+  double power_output_amps = getTotalCurrent();
+  if (output_current != nullptr)
+  {
+    *output_current = power_output_amps;
   }
-  if (current_too_high != 0){
-    return;
+  if (enforce_max_current && power_output_amps > max_current_amps)
+    return 1;
+
+  // 0. comparity check is OK since we know all currents are positive
+  if (power_output_amps == 0.) {
+    digitalWrite(_blank, HIGH);
   }
 
   if (_use_2D){
