@@ -60,15 +60,12 @@ void setChannel(uint16_t channel_number, uint16_t value);
 uint16_t getChannelValue(uint16_t channelNum, int color_channel_index);
 uint16_t getLEDValuePerChip(uint16_t chip, int led_number);
 
-/* Control Mode Parameters */
-void setBrightnessCurrent(uint8_t global);
-void setBrightnessCurrent(uint8_t red, uint8_t green, uint8_t blue);
-
 void setRgbPinOrder(uint8_t rPos, uint8_t grPos, uint8_t bPos);
 void setPinOrderSingle(uint16_t channel, uint8_t color_channel_index, uint8_t position);
 void setRgbPinOrderSingle(uint16_t channel, uint8_t rPos, uint8_t grPos, uint8_t bPos);
 
-int updateLeds(double* output_current);
+double getTotalCurrent();
+int updateLeds(double* output_current`);
 void clearLeds();
 void latch(int latch_index);
 void setSpiBaudRate(uint32_t new_baud_rate);
@@ -84,7 +81,7 @@ static const int num_tlc_one_row;
 static const uint8_t COLOR_CHANNEL_COUNT = 3;
 static const uint8_t LEDS_PER_CHIP = 8;
 static bool enforce_max_current;
-static float max_current_amps;
+static double max_current_amps;
 
 static uint8_t _rgb_order[][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT];
 static uint16_t _grayscale_data[][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT];
@@ -95,7 +92,6 @@ private:
   void updateLeds_2D(uint16_t * const_value=nullptr);
   void updateLeds_1D(uint16_t * const_value=nullptr);
   void updateChip_Leds(uint8_t chip, uint16_t * const_value);
-  int enforceMaxCurrent(uint32_t * output_counts_ptr=nullptr);
   int _num_latches;
   int _num_tlc_one_row;
   uint8_t _use_2D;
