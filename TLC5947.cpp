@@ -156,44 +156,32 @@ void TLC5947::setAllLedRgb(uint16_t red, uint16_t green, uint16_t blue)
     Serial.println(F("ERROR (TLC5947::setAllLedRgb): Color channel count is not 3"));
 }
 
+double TLC5947::getTotalCurrent()
+{
+  // Get number of counts for current pattern
+  uint32_t power_output_counts = 0;
+  for (int chip = _tlc_count - 1; chip >= 0; chip--)
+    for (int8_t led_channel_index = (int8_t)LEDS_PER_CHIP - 1; led_channel_index >= 0; led_channel_index--)
+      for (int8_t color_channel_index = (int8_t)COLOR_CHANNEL_COUNT - 1; color_channel_index >= 0; color_channel_index--)
+        power_output_counts += _grayscale_data[chip][led_channel_index][color_channel_index];
 
-// Returns 1 if the current is too high.
-int TLC5947::enforceMaxCurrent(uint32_t * output_counts_ptr){
-  if (enforce_max_current)
-  {
-    // Get number of counts for current pattern
-    uint32_t power_output_counts = 0;
-    for (int chip = _tlc_count - 1; chip >= 0; chip--)
-      for (int8_t led_channel_index = (int8_t)LEDS_PER_CHIP - 1; led_channel_index >= 0; led_channel_index--)
-        for (int8_t color_channel_index = (int8_t)COLOR_CHANNEL_COUNT - 1; color_channel_index >= 0; color_channel_index--)
-          power_output_counts += _grayscale_data[chip][led_channel_index][color_channel_index];
-
-
-    if (output_counts_ptr != nullptr) {
-      *output_counts_ptr = power_output_counts;
-    }
-    double power_output_amps = ((double)power_output_counts / (double)UINT16_MAX) * LED_CURRENT_AMPS;
-    if (power_output_amps > max_current_amps)
-    {
-      Serial.print(F("Current output ("));
-      Serial.print(power_output_amps);
-      Serial.print(F(") exceeds maximum current output ("));
-      Serial.print(max_current_amps);
-      Serial.println(')');
-      return 1;
-    }
-  }
-  return 0;
+  double power_output_amps = ((double)power_output_counts / (double)UINT16_MAX) * maxCurrentValue;
+  return power_output_amps;
 }
-void TLC5947::updateLeds(){
-  uint32_t total_output_counts = 0;
-  int current_too_high = enforceMaxCurrent(&total_output_counts);
-  if (total_output_counts == 0) {
-    digitalWrite(_blank, HIGH);
-    return;
+
+int TLC5947::updateLeds(double* output_current) {
+
+  double power_output_amps = getTotalCurrent();
+  if (output_current != nullptr)
+  {
+    *output_current = power_output_amps;
   }
-  if (current_too_high != 0){
-    return;
+  if (enforce_max_current && power_output_amps > max_current_amps)
+    return 1;
+
+  // 0. comparity check is OK since we know all currents are positive
+  if (power_output_amps == 0.) {
+    digitalWrite(_blank, HIGH);
   }
 
   if (_use_2D){
@@ -201,7 +189,9 @@ void TLC5947::updateLeds(){
   } else {
     updateLeds_1D();
   }
+  return 0;
 }
+
 void TLC5947::updateLeds_1D(uint16_t *const_value){
   // ASSUMING that _grayscale_data is declared as [][LEDS_PER_CHIP][COLOR_CHANNEL_COUNT]
   SPI.beginTransaction(mSettings);
