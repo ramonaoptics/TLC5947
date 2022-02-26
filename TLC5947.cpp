@@ -301,43 +301,23 @@ void TLC5947::setChannel(uint16_t channel_number, uint16_t value)
   _grayscale_data[chip_number][channel_number_new][color_channel_number] = value;
 }
 
-void TLC5947::setLed(uint16_t led_number, uint16_t red, uint16_t green, uint16_t blue)
+void TLC5947::setLed(int led_number, uint16_t red, uint16_t green, uint16_t blue)
 {
-  uint8_t chip = (uint8_t)floor(led_number / LEDS_PER_CHIP);
-  uint8_t channel = (uint8_t)(led_number - LEDS_PER_CHIP * chip);        // Turn that LED on
-  _grayscale_data[chip][channel][2] = blue;
-  _grayscale_data[chip][channel][1] = green;
+  int chip = led_number / LEDS_PER_CHIP;
+  int channel = led_number % LEDS_PER_CHIP;
   _grayscale_data[chip][channel][0] = red;
+  _grayscale_data[chip][channel][1] = green;
+  _grayscale_data[chip][channel][2] = blue;
 }
 
-void TLC5947::setLedAppend(uint16_t led_number, uint16_t red, uint16_t green, uint16_t blue)
+void TLC5947::setLed(int led_number, uint16_t rgb)
 {
-  uint8_t chip = (uint16_t)floor(led_number / LEDS_PER_CHIP);
-  uint8_t channel = (uint8_t)(led_number - LEDS_PER_CHIP * chip);        // Turn that LED on
+  int chip = led_number / LEDS_PER_CHIP;
+  int channel = led_number % LEDS_PER_CHIP;
 
-  if (((uint32_t)blue + (uint32_t) _grayscale_data[chip][channel][2]) > (uint32_t)UINT16_MAX)
-    _grayscale_data[chip][channel][2] = UINT16_MAX;
-  else
-    _grayscale_data[chip][channel][2] = blue  + _grayscale_data[chip][channel][2];
-
-  if (((uint32_t)green + (uint32_t) _grayscale_data[chip][channel][1]) > (uint32_t)UINT16_MAX)
-    _grayscale_data[chip][channel][1] = UINT16_MAX;
-  else
-    _grayscale_data[chip][channel][1] = green  + _grayscale_data[chip][channel][1];
-
-  if (((uint32_t)red + (uint32_t) _grayscale_data[chip][channel][0]) > (uint32_t)UINT16_MAX)
-    _grayscale_data[chip][channel][0] = UINT16_MAX;
-  else
-    _grayscale_data[chip][channel][0] = red  + _grayscale_data[chip][channel][0];
-}
-
-void TLC5947::setLed(uint16_t led_number, uint16_t rgb)
-{
-  uint8_t chip = (uint16_t)floor(led_number / LEDS_PER_CHIP);
-  uint8_t channel = (uint8_t)(led_number - LEDS_PER_CHIP * chip);        // Turn that LED on
-  _grayscale_data[chip][channel][2] = rgb;
-  _grayscale_data[chip][channel][1] = rgb;
   _grayscale_data[chip][channel][0] = rgb;
+  _grayscale_data[chip][channel][1] = rgb;
+  _grayscale_data[chip][channel][2] = rgb;
 }
 
 void TLC5947::latch(int latch_index)
