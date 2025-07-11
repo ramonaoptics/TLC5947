@@ -35,7 +35,6 @@
 #ifndef TLC5947_H
 #define TLC5947_H
 
-//#include <Arduino.h>
 #include <stdint.h>
 #include <SPI.h>
 
@@ -57,7 +56,7 @@ void setChannel(uint16_t channel_number, uint16_t value);
 
 /* Get LED Intensities */
 uint16_t getChannelValue(uint16_t channelNum, int color_channel_index);
-uint16_t getLEDValuePerChip(uint16_t chip, int led_number);
+uint16_t getLEDValuePerChip(int32_t chip, int led_number);
 
 void setRgbPinOrder(uint8_t rPos, uint8_t grPos, uint8_t bPos);
 void setPinOrderSingle(uint16_t channel, uint8_t color_channel_index, uint8_t position);
@@ -74,7 +73,7 @@ uint32_t getSpiBaudRate();
 void setGsclkFreq(uint32_t new_gsclk_frequency);
 uint32_t getGsclkFreq();
 
-static const int _tlc_count; //
+static const int32_t _tlc_count;
 static const int latch_index;
 static const int num_tlc_one_row;
 static const uint8_t COLOR_CHANNEL_COUNT = 3;
@@ -90,7 +89,7 @@ uint8_t rgb_order_default[3] = {0, 1, 2};
 private:
   void updateLeds_2D(uint16_t * const_value=nullptr);
   void updateLeds_1D(uint16_t * const_value=nullptr);
-  void updateChip_Leds(uint8_t chip, uint16_t * const_value);
+  void updateChip_Leds(int32_t chip, uint16_t * const_value);
   int _num_latches;
   int _num_tlc_one_row;
   uint8_t _use_2D;
